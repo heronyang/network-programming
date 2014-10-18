@@ -1,0 +1,72 @@
+/////////////////////////////////////////////////////////////////////////////////////////////////////
+Input spec:
+
+1.	The length of a single-line input will not exceed 10000 characters.
+	There may be huge number of commands in a single-line input.
+	Each command will not exceed 256 characters.
+
+2.	There must be one or more spaces between commands and symbols (or arguments.),
+	but no spaces between pipe and numbers.
+
+	e.g. cat hello.txt | number
+	     cat hello.txt |1 number
+
+3.	There will not be any '/' character in demo input.
+
+4.	Pipe ("|") will not come with "printenv" and "setenv."
+
+5.	Use '% ' as the command line prompt.
+
+/////////////////////////////////////////////////////////////////////////////////////////////////////
+About server:
+
+
+1.	The welcome message MUST been shown as follows:
+****************************************
+** Welcome to the information server. **
+****************************************
+
+2.	Close the connection between the server and the client immediately when the server receive "exit".
+
+3.	Note that the forked process of server MUST be killed when the connection to the client is closed.
+	Otherwise, there may be lots zombie processes.
+
+/////////////////////////////////////////////////////////////////////////////////////////////////////
+About parsing:
+
+1.	If there is command not found, print as follows:
+	Unknown command: [command].
+
+e.g. 	% ctt
+		Unknown command: [ctt].
+
+/////////////////////////////////////////////////////////////////////////////////////////////////////
+About a numbered-pipe
+
+1.	|N means the stdout of last command should be piped to next Nth legal process, where 1 <= N <= 1000.
+
+2.	If there is any error in a input line, the line number still counts.
+
+e.g.
+	% ls |1
+	% ctt               <= unknown command, process number is not counted
+	Unknown command: [ctt].
+	% number
+	1	bin/
+	2	test.html
+
+e.g.
+	% ls |1 ctt   		<= if find any process illegal, process will stop immediately
+	Unknown command: [ctt].
+	% cat               <= this command is first legal process after "ls |1"
+	bin/
+	test.html
+	
+3.	In our testing data, we will not use pipe or numbered-pipe after unknown command like "ls |1 ctt | cat" or "ls |1 ctt |1".
+
+/////////////////////////////////////////////////////////////////////////////////////////////////////
+Other proposed:
+
+1.	There must be "ls", "cat", "removetag", "removetag0", "number¡¨ in "bin/" of ¡§ras/¡§.
+
+2.	You have to execute the files in "bin/" with an "exec()"-based function.(eg. execvp() or execlp() ...)
