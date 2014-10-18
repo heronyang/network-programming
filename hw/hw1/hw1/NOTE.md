@@ -1,3 +1,9 @@
+**Exec Family
+- execl:    run file by having absolute file path
+- execlp:   run file by search in $PATH
+- execv:    same as execl, but only two arguments (path, char* argv[])
+- execve:   3 arguments, the 3rd one is for adding new environment variables
+
 **Variables
 - BACKLOG: the maximum length to which the queue of pending connections for sockfd may grow
 
