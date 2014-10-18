@@ -25,24 +25,15 @@
 char send_buff[SIZE_SEND_BUFF];
 char read_buff[SIZE_READ_BUFF];
 
+char **argv;    // decoded command
+
 /*
  * Shell
  */
-int prompt(int connfd) {
-    snprintf(send_buff, sizeof(send_buff), "$ ");
-    write(connfd, send_buff, strlen(send_buff)); 
-    return read(connfd, read_buff, sizeof(read_buff));
-}
-
-void command_handler(char *command) {
-
-    printf("get command: %s.\n", command);
-
-    // split the original string
-    char **argv     = NULL;
-    char  *token    = " \t\n\r";                // characters for splitting
-    char  *p        = strtok(command, token);
-    int argc = 0, i;
+char **command_decode(char *command) {
+    char *token = " \t\n\r";                // characters for splitting
+    char *p = strtok(command, token);
+    int argc = 0;
 
     while(p) {
         argc ++;
@@ -59,9 +50,30 @@ void command_handler(char *command) {
     argv = realloc(argv, sizeof(char *) * (argc+1));
     argv[argc] = 0;     // set last one as NULL
 
-    // exexcute here
-    execvp(argv[0], argv);
+    return argv;
+}
 
+int prompt(int connfd) {
+
+    int r = 0;
+
+    snprintf(send_buff, sizeof(send_buff), "$ ");
+    write(connfd, send_buff, strlen(send_buff)); 
+    r = read(connfd, read_buff, sizeof(read_buff));
+
+    argv = command_decode(read_buff);
+    if(strcmp(argv[0], "exit")==0) {
+        close(connfd);
+        return 0;   // same as end
+    }
+
+    printf("[prompt] r = %d\n", r);
+    return r;
+
+}
+
+void command_handler() {
+    execvp(argv[0], argv);
 }
 
 void client_handler(int connfd) {
@@ -70,7 +82,7 @@ void client_handler(int connfd) {
     memset(read_buff, 0, sizeof(read_buff)); 
 
     // handle (first)
-    prompt(connfd);
+    if(!prompt(connfd)) return;
 
     // handle (rest)
     while(1) {
@@ -86,11 +98,15 @@ void client_handler(int connfd) {
             dup2(connfd, STDERR_FILENO);    // duplicate socket on stderr
             close(connfd);                  // close connection
 
-            command_handler(read_buff);
+            command_handler();
             exit(0);
+
         } else {                        // if parent
             wait(NULL);
-            if(!prompt(connfd)) break;
+            if(!prompt(connfd)) {
+                close(connfd);
+                return;
+            }
         }
     }
 }
@@ -135,7 +151,6 @@ int main(int argc, char *argv[]) {
 
         client_handler(connfd);
 
-        /* socket - close */
         printf("closed connection: %d\n", connfd);
         sleep(1);
 
