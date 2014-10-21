@@ -62,7 +62,30 @@ e.g.
 	bin/
 	test.html
 	
-3.	In our testing data, we will not use pipe or numbered-pipe after unknown command like "ls |1 ctt | cat" or "ls |1 ctt |1".
+3.	In our testing data, we will use pipe or numbered-pipe after unknown command like "ls |1 ctt | cat" or "ls |1 ctt |1". 
+	In this case, process will stop when running unknown command, so the command or numbered-pipe after unknown command will not execute 
+	and numbered-pipe will not be counted.
+
+e.g.
+	% ls |1 ctt | cat   <= cat will not execute and numbered-pipe will not be counted.
+	Unknown command: [ctt].
+	% cat
+	bin/
+	test.html
+	
+4.	If mutiple commands output to the same pipe, the output should be ordered, not mixed.
+
+e.g.
+	% ls |3 removetag test.html |2 ls |1 cat   <= cat will not execute and numbered-pipe will not be counted.
+	bin/
+	test.html
+	
+	Test
+	This is a test program
+	for ras.
+
+	bin/
+	test.html
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////
 Other proposed:

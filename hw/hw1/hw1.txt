@@ -89,22 +89,22 @@ for ras.
   5
 % removetag test.html |3 removetag test.html | number |1 number		# |3 skips two processes.
   1
-  2	Test
-  3	This is a test program
-  4	for ras.
+  2 Test
+  3 This is a test program
+  4 for ras.
   5
-  1   1
-  2   2	Test
-  3   3	This is a test program
-  4   4	for ras.
-  5   5
-% ls |2 ls | cat		# in this case, two ls are forked and running concurrently and output to the same pipe.
-  bin/                  # the output from two ls commands might mix together(due to the CPU scheduling of different processes)
+  6	1
+  7	2 Test
+  8	3 This is a test program
+  9	4 for ras.
+ 10	5
+% ls |2 ls | cat		# in this case, two ls output to the same pipe, the output of second ls will append to the output of first ls.
+  bin/                
   test.html
-  bin/
   test1.txt
-  test.html
   test2.txt
+  bin/
+  test.html
   test1.txt
   test2.txt
 % ls |2 removetag test.html		# ls pipe to next command
