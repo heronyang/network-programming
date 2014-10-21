@@ -7,6 +7,19 @@
  * Check NOTE.md for details.
  */
 
+/*
+ * FIXME:
+ * 1. will '>>' be in the test data?
+ * 2. sizes
+ *
+ * TODO:
+ * 1. raise error if calling root command
+ * 2. '>' piping
+ * 3. cat pipe
+ */
+
+
+
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
@@ -17,19 +30,50 @@
 #include <string.h>
 #include <sys/types.h>
 
+#define DEBUG           1
+
 #define SIZE_SEND_BUFF  10001
 #define SIZE_READ_BUFF  10001
 #define PORT            33916
 #define BACKLOG         10
+#define MAX_PIPE_NUM    10000
 
 #define FALSE           0
 #define TRUE            1
+
+#define IN              0
+#define OUT             1
 
 char send_buff[SIZE_SEND_BUFF];
 char read_buff[SIZE_READ_BUFF];
 
 char **argv;    // decoded command
 int argc = 0;
+int *pipe_map[MAX_PIPE_NUM];
+
+/*
+ * Pipe Map
+ */
+int *pipe_create(int p_n) {
+    int *fd = malloc(sizeof(int) * 2);
+    if(pipe_map[p_n])   return pipe_map[p_n];
+    if(pipe(fd) < 0)    fprintf(stderr, "Fork failed\n");
+    pipe_map[p_n] = fd;
+    return fd;
+}
+
+int pipe_get() {
+    if(!pipe_map[0])    return 0;
+    close(pipe_map[0][OUT]);
+    return pipe_map[0][IN];
+}
+
+void pipe_shift() {
+    int i;
+    for( i=0 ; i<(MAX_PIPE_NUM-1) ; i++ ){
+        pipe_map[i] = pipe_map[i+1];
+    }
+}
 
 /*
  * Shell
@@ -95,16 +139,44 @@ void welcome_msg(int connfd) {
 }
 
 // simple exec (no pipe included)
-void fork_and_exec(char **cmd) {
+void fork_and_exec(char **cmd, int p_n) {
+
+    // create pipe
+    int *fd = pipe_create(p_n);
+
     pid_t pid;
     pid = fork();
+
     if(pid<0) {                     // if error
         fprintf(stderr, "Fork failed\n");
         exit(-1);
     } else if (pid ==0) {           // if child
-        execvp(cmd[0], cmd);
+
+        if(DEBUG) {
+            int i;
+            for( i=0 ; i<10 ; i++ )
+                if(pipe_map[i]) printf("pipe_map[%d] = %d, [%d][%d]\n", i, pipe_map[i], pipe_map[i][IN], pipe_map[i][OUT]);
+        }
+
+        // redirect STDOUT to pipe
+        dup2(fd[OUT], STDOUT_FILENO);
+
+        // bind pipe in
+        close(fd[IN]);
+        int fd_in = pipe_get();
+        if(fd_in)   dup2(fd_in, STDIN_FILENO);
+
+        if(DEBUG) {
+            fprintf(stderr, "IN: %d\n", fd_in);
+            fprintf(stderr, "OUT: %d\n", fd[OUT]);
+        }
+
+        if( execvp(cmd[0], cmd)<0 ) {
+            fprintf(stderr, "Unknown command: [%s]\n", cmd[0]);
+        }
         exit(0);
     } else {                        // if parent
+        // for future pipe in
         wait(NULL);
     }
 }
@@ -148,15 +220,18 @@ void command_handler() {
                 argv[argc] = NULL;
                 argv_s[i] = NULL;
 
-                // DEBUG
-                int k;
-                printf("\n==========\n(pipe)exec: ");
-                for( k=0 ; argv_s[k]!=NULL ; k++ ){
-                    printf(".%s", argv_s[k]);
+                if(DEBUG) {
+                    int k;
+                    printf("\n==========\n(pipe)exec: ");
+                    for( k=0 ; argv_s[k]!=NULL ; k++ ){
+                        printf(".%s", argv_s[k]);
+                    }
+                    printf("\n");
                 }
-                printf("\n");
 
-                fork_and_exec(argv_s);
+                fork_and_exec(argv_s, p_n);
+                pipe_shift();
+
                 break;
 
             }
@@ -165,14 +240,33 @@ void command_handler() {
     }
 
     // DEBUG
-    printf("\n==========\n(rest)exec: ");
-    for( i=0 ; argv[i]!=NULL ; i++ ){
-        printf(".%s", argv[i]);
+    if(DEBUG) {
+        printf("\n==========\n(rest)exec: ");
+        for( i=0 ; argv[i]!=NULL ; i++ ){
+            printf(".%s", argv[i]);
+        }
+        printf("\n");
     }
-    printf("\n");
+
+    // DEBUG
+    if(DEBUG) {
+        for( i=0 ; i<10 ; i++ )
+            if(pipe_map[i]) printf("pipe_map[%d] = %d, [%d][%d]\n", i, pipe_map[i], pipe_map[i][IN], pipe_map[i][OUT]);
+    }
+
+    // bind pipe in
+    int fd_in = pipe_get();
+    if(fd_in)   dup2(fd_in, STDIN_FILENO);
 
     // handle rest
-    execvp(argv[0], argv);
+    if(DEBUG) {
+        fprintf(stderr, "IN: %d\n", fd_in);
+        fprintf(stderr, "OUT: -\n");
+    }
+    if( execvp(argv[0], argv)<0 ) {
+        fprintf(stderr, "Unknown command: [%s]\n", argv[0]);
+    }
+    pipe_shift();
 }
 
 
