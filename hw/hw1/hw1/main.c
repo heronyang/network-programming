@@ -148,14 +148,14 @@ void command_handler() {
                 argv[argc] = NULL;
                 argv_s[i] = NULL;
 
-                /*
+                // DEBUG
                 int k;
-                printf("exec: ");
+                printf("\n==========\n(pipe)exec: ");
                 for( k=0 ; argv_s[k]!=NULL ; k++ ){
                     printf(".%s", argv_s[k]);
                 }
                 printf("\n");
-                */
+
                 fork_and_exec(argv_s);
                 break;
 
@@ -164,15 +164,14 @@ void command_handler() {
         if(!is_pipe)    break;
     }
 
-    // handle rest
-    /*
-    printf("(rest)exec: ");
-    printf("argc = %d\n", argc);
+    // DEBUG
+    printf("\n==========\n(rest)exec: ");
     for( i=0 ; argv[i]!=NULL ; i++ ){
         printf(".%s", argv[i]);
     }
     printf("\n");
-    */
+
+    // handle rest
     execvp(argv[0], argv);
 }
 
