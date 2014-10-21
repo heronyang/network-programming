@@ -1,0 +1,2 @@
+#!/bin/bash
+echo $(date '+%Y %b %d %H:%m:%S') >> touched
