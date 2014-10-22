@@ -74,7 +74,6 @@ int *pipe_create(int p_n) {
 
 int pipe_get() {
     if(!pipe_map[0])    return 0;
-    close(pipe_map[0][OUT]);
     return pipe_map[0][IN];
 }
 
@@ -171,16 +170,6 @@ void fork_and_exec(char **cmd, int p_n) {
         exit(-1);
     } else if (pid ==0) {           // if child
 
-        if(DEBUG) {
-            int i;
-            for( i=0 ; i<10 ; i++ )
-                if(pipe_map[i]) printf("pipe_map[%d] = %d, [%d][%d]\n", i, pipe_map[i], pipe_map[i][IN], pipe_map[i][OUT]);
-        }
-
-        // redirect STDOUT to pipe
-        dup2(fd[OUT], STDOUT_FILENO);
-        close(fd[IN]);
-
         // output old_pipe content if exist
         if(old_pipe!=NULL) {
 
@@ -200,22 +189,36 @@ void fork_and_exec(char **cmd, int p_n) {
             }
         }
 
+        // redirect STDOUT to pipe
+        close(fd[IN]);
+        dup2(fd[OUT], STDOUT_FILENO);
+
+        // DEBUG
+        if(DEBUG) {
+            int i;
+            for( i=0 ; i<10 ; i++ )
+                if(pipe_map[i]) fprintf(stderr, "pipe_map[%d] = %d, [%d][%d]\n", i, pipe_map[i], pipe_map[i][IN], pipe_map[i][OUT]);
+        }
+
         // redirect STDIN to pipe_map[0][IN]
         int fd_in = pipe_get();
         if(fd_in)   dup2(fd_in, STDIN_FILENO);
 
+        // handle rest
         if(DEBUG) {
             fprintf(stderr, "IN: %d\n", fd_in);
             fprintf(stderr, "OUT: %d\n", fd[OUT]);
         }
-
         if( execvp(cmd[0], cmd)<0 ) {
-            fprintf(stderr, "Unknown command: [%s]\n", cmd[0]);
+            fprintf(stderr, "Unknown command: [%s]\n", argv[0]);
         }
+
         exit(0);
+
     } else {                        // if parent
         // for future pipe in
         wait(NULL);
+        close(fd[OUT]);
     }
 }
 
@@ -230,7 +233,6 @@ void command_handler() {
         is_pipe = FALSE;
 
         for( i=0 ; i<argc ; i++ ) {
-            // printf("check i=%d, argv=%s\n", i, argv[i]);
             if(argv[i] && argv[i][0] == '|') {
 
                 char **argv_s = malloc(sizeof(char *) * (i));
@@ -254,6 +256,7 @@ void command_handler() {
                         strcpy(argv[j], argv[j+i+1]);
                     }
                 }
+
                 argc -= (i+1);
                 argv[argc] = NULL;
                 argv_s[i] = NULL;
@@ -290,7 +293,7 @@ void command_handler() {
     // DEBUG
     if(DEBUG) {
         for( i=0 ; i<10 ; i++ )
-            if(pipe_map[i]) printf("pipe_map[%d] = %d, [%d][%d]\n", i, pipe_map[i], pipe_map[i][IN], pipe_map[i][OUT]);
+            if(pipe_map[i]) fprintf(stderr, "pipe_map[%d] = %d, [%d][%d]\n", i, pipe_map[i], pipe_map[i][IN], pipe_map[i][OUT]);
     }
 
     // bind pipe in
