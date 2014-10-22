@@ -19,7 +19,6 @@
  */
 
 
-
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
@@ -34,6 +33,7 @@
 
 #define SIZE_SEND_BUFF  10001
 #define SIZE_READ_BUFF  10001
+#define SIZE_PIPE_BUFF  10001
 #define PORT            33916
 #define BACKLOG         10
 #define MAX_PIPE_NUM    10000
@@ -46,20 +46,30 @@
 
 char send_buff[SIZE_SEND_BUFF];
 char read_buff[SIZE_READ_BUFF];
+char pipe_buff[SIZE_PIPE_BUFF];
 
 char **argv;    // decoded command
 int argc = 0;
 int *pipe_map[MAX_PIPE_NUM];
+int *old_pipe;
 
 /*
  * Pipe Map
  */
 int *pipe_create(int p_n) {
+
     int *fd = malloc(sizeof(int) * 2);
-    if(pipe_map[p_n])   return pipe_map[p_n];
     if(pipe(fd) < 0)    fprintf(stderr, "Fork failed\n");
+
+    if(pipe_map[p_n]) {     // TODO: can we barely do '='?
+        old_pipe = malloc(sizeof(int) * 2);
+        old_pipe[IN] = pipe_map[p_n][IN];
+        old_pipe[OUT] = pipe_map[p_n][OUT];
+    }
+
     pipe_map[p_n] = fd;
     return fd;
+
 }
 
 int pipe_get() {
@@ -138,6 +148,15 @@ void welcome_msg(int connfd) {
     write(connfd, send_buff, strlen(send_buff)); 
 }
 
+void debug_print_pipe_cat_content(int count) {
+    int k;
+    fprintf(stderr, "---\n");
+    for( k=0 ; k<count ; k++ ) {
+        fprintf(stderr, "%c", pipe_buff[k], pipe_buff[k]);
+    }
+    fprintf(stderr, "---\n");
+}
+
 // simple exec (no pipe included)
 void fork_and_exec(char **cmd, int p_n) {
 
@@ -160,9 +179,28 @@ void fork_and_exec(char **cmd, int p_n) {
 
         // redirect STDOUT to pipe
         dup2(fd[OUT], STDOUT_FILENO);
-
-        // bind pipe in
         close(fd[IN]);
+
+        // output old_pipe content if exist
+        if(old_pipe!=NULL) {
+
+            memset(pipe_buff, 0, sizeof(pipe_buff)); 
+            close(old_pipe[OUT]);
+            if(DEBUG)   fprintf(stderr, "cating [%d] -> [%d]\n", old_pipe[IN], fd[OUT]);
+
+            int count;
+            if( (count = read(old_pipe[IN], pipe_buff, SIZE_PIPE_BUFF)) < 0 ) {
+                fprintf(stderr, "read pipe connent error: %s\n", strerror(errno));
+            }
+
+            if(DEBUG)   debug_print_pipe_cat_content(count);
+
+            if( write(fd[OUT], pipe_buff, count) < 0 ) {
+                fprintf(stderr, "write pipe connent error: %s\n", strerror(errno));
+            }
+        }
+
+        // redirect STDIN to pipe_map[0][IN]
         int fd_in = pipe_get();
         if(fd_in)   dup2(fd_in, STDIN_FILENO);
 
@@ -223,6 +261,7 @@ void command_handler() {
                 if(DEBUG) {
                     int k;
                     printf("\n==========\n(pipe)exec: ");
+                    fprintf(stderr, "p_n = %d\n", p_n);
                     for( k=0 ; argv_s[k]!=NULL ; k++ ){
                         printf(".%s", argv_s[k]);
                     }
