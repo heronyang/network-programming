@@ -53,6 +53,8 @@ int argc = 0;
 int *pipe_map[MAX_PIPE_NUM];
 int *old_pipe;
 
+int connfd = 0;
+
 /*
  * Pipe Map
  */
@@ -109,15 +111,17 @@ char **command_decode(char *command) {
     argv[argc] = 0;     // set last one as NULL
 
     // output for debug
-    int i;
-    printf("argv: ");
-    for( i=0 ; i<argc ; i++ )   printf(" %s", argv[i]);
-    printf("\n");
+    if(DEBUG) {
+        int i;
+        fprintf(stderr, "argv: ");
+        for( i=0 ; i<argc ; i++ )   fprintf(stderr, " %s", argv[i]);
+        fprintf(stderr, "\n");
+    }
 
     return argv;
 }
 
-int prompt(int connfd) {
+int prompt() {
 
     int r = 0;
 
@@ -134,12 +138,11 @@ int prompt(int connfd) {
         return 0;   // same as end
     }
 
-    printf("[prompt] r = %d\n", r);
     return r;
 
 }
 
-void welcome_msg(int connfd) {
+void welcome_msg() {
     char *msg = "****************************************\n\
 ** Welcome to the information server. **\n\
 ****************************************\n";
@@ -159,6 +162,18 @@ void debug_print_pipe_cat_content(int count) {
 // simple exec (no pipe included), for last command (no following pipe)
 void fork_and_exec_last() {
 
+    if(argc==0) {
+        if(DEBUG)   fprintf(stderr, "empty exec command for last\n");
+        return;
+    }
+
+    // bind pipe in
+    int fd_in = pipe_get();
+    if(fd_in)   dup2(fd_in, STDIN_FILENO);
+
+    // bind out to stdout
+    dup2(connfd, STDOUT_FILENO);                // duplicate socket on stdout
+
     // DEBUG
     int i;
     if(DEBUG) {
@@ -176,14 +191,6 @@ void fork_and_exec_last() {
             if(pipe_map[i]) fprintf(stderr, "pipe_map[%d] = %d, [%d][%d]\n", i, pipe_map[i], pipe_map[i][IN], pipe_map[i][OUT]);
     }
 
-    if(argc==0) {
-        if(DEBUG)   fprintf(stderr, "empty exec command for last\n");
-        return;
-    }
-
-    // bind pipe in
-    int fd_in = pipe_get();
-    if(fd_in)   dup2(fd_in, STDIN_FILENO);
 
     // handle rest
     if(DEBUG) {
@@ -237,6 +244,7 @@ void fork_and_exec_pipe(char **cmd, int p_n) {
             if( (count = read(old_pipe[IN], pipe_buff, SIZE_PIPE_BUFF)) < 0 ) {
                 fprintf(stderr, "read pipe connent error: %s\n", strerror(errno));
             }
+            close(old_pipe[IN]);
 
             if(DEBUG)   debug_print_pipe_cat_content(count);
 
@@ -246,9 +254,12 @@ void fork_and_exec_pipe(char **cmd, int p_n) {
 
         }
 
+        printf("testaaaaaaaaaaaaaaaaa!");
         // redirect STDOUT to pipe
         close(fd[IN]);
         dup2(fd[OUT], STDOUT_FILENO);
+
+        printf("testbbbbbbbbbbbbbbbb!");
 
         // DEBUG
         if(DEBUG) {
@@ -320,12 +331,12 @@ void command_handler() {
 
                 if(DEBUG) {
                     int k;
-                    printf("\n==========\n(pipe)exec: ");
+                    fprintf(stderr, "\n==========\n(pipe)exec: ");
                     fprintf(stderr, "p_n = %d\n", p_n);
                     for( k=0 ; argv_s[k]!=NULL ; k++ ){
-                        printf(".%s", argv_s[k]);
+                        fprintf(stderr, ".%s", argv_s[k]);
                     }
-                    printf("\n");
+                    fprintf(stderr, "\n");
                 }
 
                 fork_and_exec_pipe(argv_s, p_n);
@@ -342,7 +353,9 @@ void command_handler() {
 }
 
 
-void client_handler(int connfd) {
+void client_handler() {
+
+    if(DEBUG)   dup2(connfd, STDERR_FILENO);    // duplicate socket on stderr
 
     // handle (first)
     welcome_msg(connfd);
@@ -350,34 +363,10 @@ void client_handler(int connfd) {
 
     // handle (rest)
     while(1) {
-        pid_t pid;
-        pid = fork();
-        
-        if(pid<0) {                     // if error
-            fprintf(stderr, "Fork failed\n");
-            exit(-1);
-        } else if (pid ==0) {           // if child
-
-            dup2(connfd, STDOUT_FILENO);    // duplicate socket on stdout
-            dup2(connfd, STDERR_FILENO);    // duplicate socket on stderr
-            close(connfd);                  // close connection
-
-            fprintf(stderr, "before command handling...\n");
-            int i;
-            for(i=0 ; i<10 ; i++) {
-                if(pipe_map[i]==NULL)   fprintf(stderr, "pipe_map[%d] = NULL\n", i);
-                else                    fprintf(stderr, "pipe_map[%d] = %d\n", pipe_map[i]);
-            }
-            fprintf(stderr, "---\n");
-
-            command_handler();
-            exit(0);
-
-        } else {                        // if parent
-            wait(NULL);
-            if(!prompt(connfd)) return;
-        }
+        command_handler();
+        if(!prompt(connfd)) return;
     }
+
 }
 
 
@@ -387,7 +376,7 @@ void client_handler(int connfd) {
 int main(int argc, char *argv[]) {
 
     /* variables */
-    int listenfd = 0, connfd = 0;
+    int listenfd = 0;
     struct sockaddr_in serv_addr; 
 
     time_t ticks; 
@@ -418,7 +407,7 @@ int main(int argc, char *argv[]) {
         connfd = accept(listenfd, (struct sockaddr*)NULL, NULL); 
         printf("accepted connection: %d\n", connfd);
 
-        client_handler(connfd);
+        client_handler();
         /* socket - close */
         close(connfd);
 

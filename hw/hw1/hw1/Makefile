@@ -8,7 +8,7 @@ main: $(OBJ)
 	rm *.o
 
 %.o: %.c
-	$(CC) -c -o $@ $<
+	$(CC) -g -c -o $@ $<
 
 run_server:
 	@./main
