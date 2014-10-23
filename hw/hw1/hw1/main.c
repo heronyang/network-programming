@@ -156,8 +156,64 @@ void debug_print_pipe_cat_content(int count) {
     fprintf(stderr, "---\n");
 }
 
-// simple exec (no pipe included)
-void fork_and_exec(char **cmd, int p_n) {
+// simple exec (no pipe included), for last command (no following pipe)
+void fork_and_exec_last() {
+
+    // DEBUG
+    int i;
+    if(DEBUG) {
+        printf("\n==========\n(rest)exec: ");
+        for( i=0 ; argv[i]!=NULL ; i++ ){
+            printf(".%s", argv[i]);
+        }
+        printf("\n");
+    }
+
+    // DEBUG
+    if(DEBUG) {
+        fprintf(stderr, "last...\n");
+        for( i=0 ; i<10 ; i++ )
+            if(pipe_map[i]) fprintf(stderr, "pipe_map[%d] = %d, [%d][%d]\n", i, pipe_map[i], pipe_map[i][IN], pipe_map[i][OUT]);
+    }
+
+    if(argc==0) {
+        if(DEBUG)   fprintf(stderr, "empty exec command for last\n");
+        return;
+    }
+
+    // bind pipe in
+    int fd_in = pipe_get();
+    if(fd_in)   dup2(fd_in, STDIN_FILENO);
+
+    // handle rest
+    if(DEBUG) {
+        fprintf(stderr, "IN: %d\n", fd_in);
+        fprintf(stderr, "OUT: -\n");
+    }
+
+    pid_t pid;
+    pid = fork();
+
+    if(pid<0) {                     // if error
+        fprintf(stderr, "Fork failed\n");
+        exit(-1);
+    } else if (pid ==0) {           // if child
+
+        if( execvp(argv[0], argv)<0 ) {
+            fprintf(stderr, "Unknown command: [%s]\n", argv[0]);
+        }
+        exit(0);
+
+    } else {                        // if parent
+        // for future pipe in
+        wait(NULL);
+        pipe_shift();
+    }
+
+}
+
+// simple exec (no pipe included, but for piping OUTs)
+void fork_and_exec_pipe(char **cmd, int p_n) {
 
     // create pipe
     int *fd = pipe_create(p_n);
@@ -187,6 +243,7 @@ void fork_and_exec(char **cmd, int p_n) {
             if( write(fd[OUT], pipe_buff, count) < 0 ) {
                 fprintf(stderr, "write pipe connent error: %s\n", strerror(errno));
             }
+
         }
 
         // redirect STDOUT to pipe
@@ -271,7 +328,7 @@ void command_handler() {
                     printf("\n");
                 }
 
-                fork_and_exec(argv_s, p_n);
+                fork_and_exec_pipe(argv_s, p_n);
                 pipe_shift();
 
                 break;
@@ -281,34 +338,7 @@ void command_handler() {
         if(!is_pipe)    break;
     }
 
-    // DEBUG
-    if(DEBUG) {
-        printf("\n==========\n(rest)exec: ");
-        for( i=0 ; argv[i]!=NULL ; i++ ){
-            printf(".%s", argv[i]);
-        }
-        printf("\n");
-    }
-
-    // DEBUG
-    if(DEBUG) {
-        for( i=0 ; i<10 ; i++ )
-            if(pipe_map[i]) fprintf(stderr, "pipe_map[%d] = %d, [%d][%d]\n", i, pipe_map[i], pipe_map[i][IN], pipe_map[i][OUT]);
-    }
-
-    // bind pipe in
-    int fd_in = pipe_get();
-    if(fd_in)   dup2(fd_in, STDIN_FILENO);
-
-    // handle rest
-    if(DEBUG) {
-        fprintf(stderr, "IN: %d\n", fd_in);
-        fprintf(stderr, "OUT: -\n");
-    }
-    if( execvp(argv[0], argv)<0 ) {
-        fprintf(stderr, "Unknown command: [%s]\n", argv[0]);
-    }
-    pipe_shift();
+    fork_and_exec_last();
 }
 
 
@@ -332,15 +362,20 @@ void client_handler(int connfd) {
             dup2(connfd, STDERR_FILENO);    // duplicate socket on stderr
             close(connfd);                  // close connection
 
+            fprintf(stderr, "before command handling...\n");
+            int i;
+            for(i=0 ; i<10 ; i++) {
+                if(pipe_map[i]==NULL)   fprintf(stderr, "pipe_map[%d] = NULL\n", i);
+                else                    fprintf(stderr, "pipe_map[%d] = %d\n", pipe_map[i]);
+            }
+            fprintf(stderr, "---\n");
+
             command_handler();
             exit(0);
 
         } else {                        // if parent
             wait(NULL);
-            if(!prompt(connfd)) {
-                close(connfd);
-                return;
-            }
+            if(!prompt(connfd)) return;
         }
     }
 }
@@ -384,6 +419,8 @@ int main(int argc, char *argv[]) {
         printf("accepted connection: %d\n", connfd);
 
         client_handler(connfd);
+        /* socket - close */
+        close(connfd);
 
         printf("closed connection: %d\n", connfd);
         sleep(1);
