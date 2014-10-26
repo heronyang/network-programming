@@ -1,5 +1,6 @@
 CC=gcc
 OBJ=main.o
+CFLAG=-g -Wall
 
 PORT=33916
 
@@ -8,7 +9,7 @@ main: $(OBJ)
 	rm *.o
 
 %.o: %.c
-	$(CC) -g -c -o $@ $<
+	$(CC) $(CFLAG) -c -o $@ $<
 
 run_server:
 	@./main

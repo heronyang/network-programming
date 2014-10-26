@@ -9,13 +9,12 @@
 
 /*
  * FIXME:
- * 1. will '>>' be in the test data?
+ * 1. will '>', '>>' be in the test data?
  * 2. sizes
  *
  * TODO:
  * 1. raise error if calling root command
  * 2. '>' piping
- * 3. cat pipe
  */
 
 
@@ -28,6 +27,8 @@
 #include <errno.h>
 #include <string.h>
 #include <sys/types.h>
+#include <sys/wait.h>
+#include <fcntl.h>
 
 #define DEBUG           1
 
@@ -44,11 +45,14 @@
 #define IN              0
 #define OUT             1
 
+/*
+ * Globals
+ */
 char send_buff[SIZE_SEND_BUFF];
 char read_buff[SIZE_READ_BUFF];
 char pipe_buff[SIZE_PIPE_BUFF];
 
-char **argv;    // decoded command
+char **argv;
 int argc = 0;
 int *pipe_map[MAX_PIPE_NUM];
 int *old_pipe;
@@ -76,6 +80,7 @@ int *pipe_create(int p_n) {
 
 int pipe_get() {
     if(!pipe_map[0])    return 0;
+    close(pipe_map[0][OUT]);
     return pipe_map[0][IN];
 }
 
@@ -90,7 +95,7 @@ void pipe_shift() {
  * Shell
  */
 char **command_decode(char *command) {
-    char *token = " \t\n\r";                // characters for splitting
+    char *token = " \t\n\r";
     char *p = strtok(command, token);
 
     argc = 0;
@@ -103,20 +108,11 @@ char **command_decode(char *command) {
 
         argv[argc-1] = p;
         p = strtok(NULL, token);
-
     }
 
     // for the last extra one
     argv = realloc(argv, sizeof(char *) * (argc+1));
     argv[argc] = 0;     // set last one as NULL
-
-    // output for debug
-    if(DEBUG) {
-        int i;
-        fprintf(stderr, "argv: ");
-        for( i=0 ; i<argc ; i++ )   fprintf(stderr, " %s", argv[i]);
-        fprintf(stderr, "\n");
-    }
 
     return argv;
 }
@@ -139,7 +135,6 @@ int prompt() {
     }
 
     return r;
-
 }
 
 void welcome_msg() {
@@ -150,53 +145,66 @@ void welcome_msg() {
     write(connfd, send_buff, strlen(send_buff)); 
 }
 
+/*
+ * Debug Functions
+ */
 void debug_print_pipe_cat_content(int count) {
     int k;
     fprintf(stderr, "---\n");
     for( k=0 ; k<count ; k++ ) {
-        fprintf(stderr, "%c", pipe_buff[k], pipe_buff[k]);
+        fprintf(stderr, "%c", pipe_buff[k]);
     }
     fprintf(stderr, "---\n");
 }
 
+void debug_print_command(char** argv_s, int p_n) {
+    int k;
+    fprintf(stderr, "\n==========\n(pipe)exec: ");
+    fprintf(stderr, "p_n = %d\n", p_n);
+    for( k=0 ; argv_s[k]!=NULL ; k++ ){
+        fprintf(stderr, ".%s", argv_s[k]);
+    }
+    fprintf(stderr, "\n");
+}
+
+void debug_fork_and_exec_last(int fd_in) {
+    int i;
+    printf("\n==========\n(rest)exec: ");
+    for( i=0 ; argv[i]!=NULL ; i++ ){
+        printf(".%s", argv[i]);
+    }
+    printf("\n");
+
+    fprintf(stderr, "last...\n");
+    for( i=0 ; i<10 ; i++ )
+        if(pipe_map[i]) fprintf(stderr, "pipe_map[%d] = %p, [%d][%d]\n", i, pipe_map[i], pipe_map[i][IN], pipe_map[i][OUT]);
+
+    fprintf(stderr, "IN: %d\n", fd_in);
+    fprintf(stderr, "OUT: -\n");
+}
+
+void debug_print_pipe_map() {
+    int i;
+    for( i=0 ; i<10 ; i++ )
+        if(pipe_map[i]) fprintf(stderr, "pipe_map[%d] = %p, [%d][%d]\n", i, pipe_map[i], pipe_map[i][IN], pipe_map[i][OUT]);
+}
+
+/*
+ * Handler
+ */
 // simple exec (no pipe included), for last command (no following pipe)
 void fork_and_exec_last() {
 
-    if(argc==0) {
-        if(DEBUG)   fprintf(stderr, "empty exec command for last\n");
-        return;
-    }
+    if(argc==0) return;
 
     // bind pipe in
     int fd_in = pipe_get();
     if(fd_in)   dup2(fd_in, STDIN_FILENO);
 
     // bind out to stdout
-    dup2(connfd, STDOUT_FILENO);                // duplicate socket on stdout
+    dup2(connfd, STDOUT_FILENO);    // duplicate socket on stdout
 
-    // DEBUG
-    int i;
-    if(DEBUG) {
-        printf("\n==========\n(rest)exec: ");
-        for( i=0 ; argv[i]!=NULL ; i++ ){
-            printf(".%s", argv[i]);
-        }
-        printf("\n");
-    }
-
-    // DEBUG
-    if(DEBUG) {
-        fprintf(stderr, "last...\n");
-        for( i=0 ; i<10 ; i++ )
-            if(pipe_map[i]) fprintf(stderr, "pipe_map[%d] = %d, [%d][%d]\n", i, pipe_map[i], pipe_map[i][IN], pipe_map[i][OUT]);
-    }
-
-
-    // handle rest
-    if(DEBUG) {
-        fprintf(stderr, "IN: %d\n", fd_in);
-        fprintf(stderr, "OUT: -\n");
-    }
+    if(DEBUG)   debug_fork_and_exec_last(fd_in);
 
     pid_t pid;
     pid = fork();
@@ -212,7 +220,6 @@ void fork_and_exec_last() {
         exit(0);
 
     } else {                        // if parent
-        // for future pipe in
         wait(NULL);
         pipe_shift();
     }
@@ -238,7 +245,6 @@ void fork_and_exec_pipe(char **cmd, int p_n) {
 
             memset(pipe_buff, 0, sizeof(pipe_buff)); 
             close(old_pipe[OUT]);
-            if(DEBUG)   fprintf(stderr, "cating [%d] -> [%d]\n", old_pipe[IN], fd[OUT]);
 
             int count;
             if( (count = read(old_pipe[IN], pipe_buff, SIZE_PIPE_BUFF)) < 0 ) {
@@ -246,6 +252,7 @@ void fork_and_exec_pipe(char **cmd, int p_n) {
             }
             close(old_pipe[IN]);
 
+            if(DEBUG)   fprintf(stderr, "cating [%d] -> [%d]\n", old_pipe[IN], fd[OUT]);
             if(DEBUG)   debug_print_pipe_cat_content(count);
 
             if( write(fd[OUT], pipe_buff, count) < 0 ) {
@@ -254,29 +261,20 @@ void fork_and_exec_pipe(char **cmd, int p_n) {
 
         }
 
-        printf("testaaaaaaaaaaaaaaaaa!");
+        // FIXME: bug here, I think
         // redirect STDOUT to pipe
         close(fd[IN]);
         dup2(fd[OUT], STDOUT_FILENO);
 
-        printf("testbbbbbbbbbbbbbbbb!");
-
         // DEBUG
-        if(DEBUG) {
-            int i;
-            for( i=0 ; i<10 ; i++ )
-                if(pipe_map[i]) fprintf(stderr, "pipe_map[%d] = %d, [%d][%d]\n", i, pipe_map[i], pipe_map[i][IN], pipe_map[i][OUT]);
-        }
+        if(DEBUG)   debug_print_pipe_map();
 
         // redirect STDIN to pipe_map[0][IN]
         int fd_in = pipe_get();
         if(fd_in)   dup2(fd_in, STDIN_FILENO);
 
-        // handle rest
-        if(DEBUG) {
-            fprintf(stderr, "IN: %d\n", fd_in);
-            fprintf(stderr, "OUT: %d\n", fd[OUT]);
-        }
+        if(DEBUG)   fprintf(stderr, "IN: %d\nOUT: %d\n", fd_in, fd[OUT]);
+
         if( execvp(cmd[0], cmd)<0 ) {
             fprintf(stderr, "Unknown command: [%s]\n", argv[0]);
         }
@@ -284,16 +282,73 @@ void fork_and_exec_pipe(char **cmd, int p_n) {
         exit(0);
 
     } else {                        // if parent
-        // for future pipe in
         wait(NULL);
         close(fd[OUT]);
     }
 }
 
+void fork_and_exec_file(char **cmd, char *filepath) {
+
+    pid_t pid;
+    pid = fork();
+
+    if(pid<0) {                     // if error
+        fprintf(stderr, "Fork failed\n");
+        exit(-1);
+    } else if (pid ==0) {           // if child
+
+        // bind stdout to file
+        int fd_file = open(filepath, O_WRONLY | O_TRUNC | O_CREAT, S_IRUSR | S_IRGRP | S_IWGRP | S_IWUSR);
+        dup2(fd_file, STDOUT_FILENO);
+
+        // redirect STDIN to pipe_map[0][IN]
+        int fd_in = pipe_get();
+        if(fd_in)   dup2(fd_in, STDIN_FILENO);
+
+        if( execvp(cmd[0], cmd)<0 ) {
+            fprintf(stderr, "Unknown command: [%s]\n", argv[0]);
+        }
+
+        exit(0);
+
+    } else {                        // if parent
+
+        wait(NULL);
+
+    }
+}
+
+// helper tool
+char **extract_command(int len) {
+
+    int j;
+    char **argv_s = malloc(sizeof(char *) * (len));
+
+    for( j=0 ; j<argc ; j++ ) {
+        // move to sub argv, which will be exec
+        if( j<len ) {
+            argv_s[j] = malloc(sizeof(char) * sizeof(argv[j]));
+            strcpy(argv_s[j], argv[j]);
+        }
+
+        // shift argv
+        if( j<(argc-len-1) ) {
+            argv[j] = malloc(sizeof(char) * sizeof(argv[j+len+1]));
+            strcpy(argv[j], argv[j+len+1]);
+        }
+    }
+
+    argc -= (len+1);
+    argv[argc] = NULL;
+    argv_s[len] = NULL;
+
+    return argv_s;
+}
+
 // a whole line as input (pipe may be included)
 void command_handler() {
 
-    int i, j;
+    int i;
     int is_pipe;
 
     while(1) {
@@ -303,47 +358,29 @@ void command_handler() {
         for( i=0 ; i<argc ; i++ ) {
             if(argv[i] && argv[i][0] == '|') {
 
-                char **argv_s = malloc(sizeof(char *) * (i));
                 int p_n = 1;
-
                 if(strlen(argv[i]) == 1)  p_n = 1;
                 else    sscanf(argv[i], "|%d", &p_n);
-                
+
                 is_pipe = TRUE;
 
-                for( j=0 ; j<argc ; j++ ) {
-                    // move to sub argv, which will be exec
-                    if( j<i ) {
-                        argv_s[j] = malloc(sizeof(char) * sizeof(argv[j]));
-                        strcpy(argv_s[j], argv[j]);
-                    }
+                //
+                char **argv_s = extract_command(i);
 
-                    // shift argv
-                    if( j<(argc-i-1) ) {
-                        argv[j] = malloc(sizeof(char) * sizeof(argv[j+i+1]));
-                        strcpy(argv[j], argv[j+i+1]);
-                    }
-                }
-
-                argc -= (i+1);
-                argv[argc] = NULL;
-                argv_s[i] = NULL;
-
-                if(DEBUG) {
-                    int k;
-                    fprintf(stderr, "\n==========\n(pipe)exec: ");
-                    fprintf(stderr, "p_n = %d\n", p_n);
-                    for( k=0 ; argv_s[k]!=NULL ; k++ ){
-                        fprintf(stderr, ".%s", argv_s[k]);
-                    }
-                    fprintf(stderr, "\n");
-                }
+                if(DEBUG)   debug_print_command(argv_s, p_n);
 
                 fork_and_exec_pipe(argv_s, p_n);
                 pipe_shift();
 
                 break;
 
+            }
+            if(argv[i] && argv[i][0] == '>') {
+                char *filepath = argv[i+1];
+                char **argv_s = extract_command(i);
+                if(!filepath)   fprintf(stderr, "filepath error\n");
+                fork_and_exec_file(argv_s, filepath);
+                return;
             }
         }
         if(!is_pipe)    break;
@@ -353,18 +390,19 @@ void command_handler() {
 }
 
 
+// handle one socket connection
 void client_handler() {
 
     if(DEBUG)   dup2(connfd, STDERR_FILENO);    // duplicate socket on stderr
+    dup2(connfd, STDOUT_FILENO);
 
     // handle (first)
     welcome_msg(connfd);
-    if(!prompt(connfd)) return;
 
     // handle (rest)
     while(1) {
-        command_handler();
         if(!prompt(connfd)) return;
+        command_handler();
     }
 
 }
@@ -378,8 +416,6 @@ int main(int argc, char *argv[]) {
     /* variables */
     int listenfd = 0;
     struct sockaddr_in serv_addr; 
-
-    time_t ticks; 
 
     /* init */
     listenfd = socket(AF_INET, SOCK_STREAM, 0);
@@ -408,9 +444,9 @@ int main(int argc, char *argv[]) {
         printf("accepted connection: %d\n", connfd);
 
         client_handler();
+
         /* socket - close */
         close(connfd);
-
         printf("closed connection: %d\n", connfd);
         sleep(1);
 
