@@ -17,5 +17,8 @@ run_server:
 run_client:
 	@nc localhost $(PORT)
 
+client:
+	nc nplinux1.cs.nctu.edu.tw $(PORT)
+
 clean:
 	rm main *.o
