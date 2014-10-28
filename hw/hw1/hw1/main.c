@@ -55,7 +55,7 @@ char pipe_buff[SIZE_PIPE_BUFF];
 char **argv;
 int argc = 0;
 int *pipe_map[MAX_PIPE_NUM];
-int *old_pipe;
+int *old_pipe = NULL;
 
 int connfd = 0;
 
@@ -71,6 +71,8 @@ int *pipe_create(int p_n) {
         old_pipe = malloc(sizeof(int) * 2);
         old_pipe[IN] = pipe_map[p_n][IN];
         old_pipe[OUT] = pipe_map[p_n][OUT];
+    } else {
+        old_pipe = NULL;
     }
 
     pipe_map[p_n] = fd;
@@ -80,7 +82,7 @@ int *pipe_create(int p_n) {
 
 int pipe_get() {
     if(!pipe_map[0])    return 0;
-    close(pipe_map[0][OUT]);
+    // OUT is close already as the pipe is created
     return pipe_map[0][IN];
 }
 
@@ -199,10 +201,16 @@ void fork_and_exec_last() {
 
     // bind pipe in
     int fd_in = pipe_get();
-    if(fd_in)   dup2(fd_in, STDIN_FILENO);
+    if(fd_in) {
+        if( dup2(fd_in, STDIN_FILENO) == -1 ) {
+            fprintf(stderr, "error in dup2: %s\n", strerror(errno));
+        }
+    }
 
     // bind out to stdout
-    dup2(connfd, STDOUT_FILENO);    // duplicate socket on stdout
+    if( dup2(connfd, STDOUT_FILENO) ) {    // duplicate socket on stdout
+        fprintf(stderr, "error in dup2: %s\n", strerror(errno));
+    }
 
     if(DEBUG)   debug_fork_and_exec_last(fd_in);
 
@@ -244,13 +252,16 @@ void fork_and_exec_pipe(char **cmd, int p_n) {
         if(old_pipe!=NULL) {
 
             memset(pipe_buff, 0, sizeof(pipe_buff)); 
-            close(old_pipe[OUT]);
 
             int count;
             if( (count = read(old_pipe[IN], pipe_buff, SIZE_PIPE_BUFF)) < 0 ) {
                 fprintf(stderr, "read pipe connent error: %s\n", strerror(errno));
             }
-            close(old_pipe[IN]);
+
+            if(close(old_pipe[IN]) < 0) {
+                fprintf(stderr, "pipe close error (old_pipe in): %s\n", strerror(errno));
+                exit(-1);
+            }
 
             if(DEBUG)   fprintf(stderr, "cating [%d] -> [%d]\n", old_pipe[IN], fd[OUT]);
             if(DEBUG)   debug_print_pipe_cat_content(count);
@@ -263,27 +274,40 @@ void fork_and_exec_pipe(char **cmd, int p_n) {
 
         // FIXME: bug here, I think
         // redirect STDOUT to pipe
-        close(fd[IN]);
-        dup2(fd[OUT], STDOUT_FILENO);
+        if(close(fd[IN]) < 0) {
+            fprintf(stderr, "pipe close error (fd in): %s\n", strerror(errno));
+            exit(-1);
+        }
+        if(dup2(fd[OUT], STDOUT_FILENO) == -1) {
+            fprintf(stderr, "error in dup2: %s\n", strerror(errno));
+        }
 
         // DEBUG
         if(DEBUG)   debug_print_pipe_map();
 
         // redirect STDIN to pipe_map[0][IN]
         int fd_in = pipe_get();
-        if(fd_in)   dup2(fd_in, STDIN_FILENO);
+        if(fd_in) {
+            if( dup2(fd_in, STDIN_FILENO) == -1 ){
+                fprintf(stderr, "error in dup2: %s\n", strerror(errno));
+            }
+        }
 
         if(DEBUG)   fprintf(stderr, "IN: %d\nOUT: %d\n", fd_in, fd[OUT]);
 
         if( execvp(cmd[0], cmd)<0 ) {
             fprintf(stderr, "Unknown command: [%s]\n", argv[0]);
+            close(fd[OUT]);
         }
 
         exit(0);
 
     } else {                        // if parent
         wait(NULL);
-        close(fd[OUT]);
+        if(close(fd[OUT]) < 0) {
+            fprintf(stderr, "pipe close error (fd out): %s\n", strerror(errno));
+            exit(-1);
+        }
     }
 }
 
@@ -299,14 +323,21 @@ void fork_and_exec_file(char **cmd, char *filepath) {
 
         // bind stdout to file
         int fd_file = open(filepath, O_WRONLY | O_TRUNC | O_CREAT, S_IRUSR | S_IRGRP | S_IWGRP | S_IWUSR);
-        dup2(fd_file, STDOUT_FILENO);
+        if( dup2(fd_file, STDOUT_FILENO) == -1 ) {
+            fprintf(stderr, "error in dup2: %s\n", strerror(errno));
+        }
 
         // redirect STDIN to pipe_map[0][IN]
         int fd_in = pipe_get();
-        if(fd_in)   dup2(fd_in, STDIN_FILENO);
+        if(fd_in) {
+            if( dup2(fd_in, STDIN_FILENO) == -1 ) {
+                fprintf(stderr, "error in dup2: %s\n", strerror(errno));
+            }
+        }
 
         if( execvp(cmd[0], cmd)<0 ) {
             fprintf(stderr, "Unknown command: [%s]\n", argv[0]);
+            close(fd_file);
         }
 
         exit(0);
@@ -393,8 +424,14 @@ void command_handler() {
 // handle one socket connection
 void client_handler() {
 
-    if(DEBUG)   dup2(connfd, STDERR_FILENO);    // duplicate socket on stderr
-    dup2(connfd, STDOUT_FILENO);
+    if(DEBUG) {
+        if(dup2(connfd, STDERR_FILENO) == -1) {    // duplicate socket on stderr
+            fprintf(stderr, "error in dup2: %s\n", strerror(errno));
+        }
+    }
+    if( dup2(connfd, STDOUT_FILENO) == -1 ) {
+        fprintf(stderr, "error in dup2: %s\n", strerror(errno));
+    }
 
     // handle (first)
     welcome_msg(connfd);
