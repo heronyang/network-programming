@@ -203,13 +203,13 @@ void fork_and_exec_last() {
     int fd_in = pipe_get();
     if(fd_in) {
         if( dup2(fd_in, STDIN_FILENO) == -1 ) {
-            fprintf(stderr, "error in dup2: %s\n", strerror(errno));
+            fprintf(stderr, "error in (1) dup2: %s\n", strerror(errno));
         }
     }
 
     // bind out to stdout
     if( dup2(connfd, STDOUT_FILENO) ) {    // duplicate socket on stdout
-        fprintf(stderr, "error in dup2: %s\n", strerror(errno));
+        fprintf(stderr, "error in (2) dup2: %s\n", strerror(errno));
     }
 
     if(DEBUG)   debug_fork_and_exec_last(fd_in);
@@ -279,7 +279,7 @@ void fork_and_exec_pipe(char **cmd, int p_n) {
             exit(-1);
         }
         if(dup2(fd[OUT], STDOUT_FILENO) == -1) {
-            fprintf(stderr, "error in dup2: %s\n", strerror(errno));
+            fprintf(stderr, "error in (3) dup2: %s\n", strerror(errno));
         }
 
         // DEBUG
@@ -289,7 +289,7 @@ void fork_and_exec_pipe(char **cmd, int p_n) {
         int fd_in = pipe_get();
         if(fd_in) {
             if( dup2(fd_in, STDIN_FILENO) == -1 ){
-                fprintf(stderr, "error in dup2: %s\n", strerror(errno));
+                fprintf(stderr, "error in (4) dup2: %s\n", strerror(errno));
             }
         }
 
@@ -324,14 +324,14 @@ void fork_and_exec_file(char **cmd, char *filepath) {
         // bind stdout to file
         int fd_file = open(filepath, O_WRONLY | O_TRUNC | O_CREAT, S_IRUSR | S_IRGRP | S_IWGRP | S_IWUSR);
         if( dup2(fd_file, STDOUT_FILENO) == -1 ) {
-            fprintf(stderr, "error in dup2: %s\n", strerror(errno));
+            fprintf(stderr, "error in (5) dup2: %s\n", strerror(errno));
         }
 
         // redirect STDIN to pipe_map[0][IN]
         int fd_in = pipe_get();
         if(fd_in) {
             if( dup2(fd_in, STDIN_FILENO) == -1 ) {
-                fprintf(stderr, "error in dup2: %s\n", strerror(errno));
+                fprintf(stderr, "error in (6) dup2: %s\n", strerror(errno));
             }
         }
 
@@ -426,11 +426,11 @@ void client_handler() {
 
     if(DEBUG) {
         if(dup2(connfd, STDERR_FILENO) == -1) {    // duplicate socket on stderr
-            fprintf(stderr, "error in dup2: %s\n", strerror(errno));
+            fprintf(stderr, "error in (7) dup2: %s\n", strerror(errno));
         }
     }
     if( dup2(connfd, STDOUT_FILENO) == -1 ) {
-        fprintf(stderr, "error in dup2: %s\n", strerror(errno));
+        fprintf(stderr, "error in (8) dup2: %s\n", strerror(errno));
     }
 
     // handle (first)
