@@ -19,11 +19,11 @@
 #include <sys/wait.h>
 #include <fcntl.h>
 
-#define DEBUG           0
+#define DEBUG           1
 
 #define SIZE_SEND_BUFF  10001
 #define SIZE_READ_BUFF  10001
-#define SIZE_PIPE_BUFF  10001
+#define SIZE_PIPE_BUFF  2001
 #define PORT            33916
 #define BACKLOG         10
 #define MAX_PIPE_NUM    10000
@@ -170,8 +170,10 @@ void debug_fork_and_exec_last(int fd_in) {
     printf("\n");
 
     fprintf(stderr, "last...\n");
+    fprintf(stderr, "----\n");
     for( i=0 ; i<10 ; i++ )
         if(pipe_map[i]) fprintf(stderr, "pipe_map[%d] = %p, [%d][%d]\n", i, pipe_map[i], pipe_map[i][IN], pipe_map[i][OUT]);
+    fprintf(stderr, "----\n");
 
     fprintf(stderr, "IN: %d\n", fd_in);
     fprintf(stderr, "OUT: -\n");
@@ -179,8 +181,10 @@ void debug_fork_and_exec_last(int fd_in) {
 
 void debug_print_pipe_map() {
     int i;
+    fprintf(stderr, "----\n");
     for( i=0 ; i<10 ; i++ )
         if(pipe_map[i]) fprintf(stderr, "pipe_map[%d] = %p, [%d][%d]\n", i, pipe_map[i], pipe_map[i][IN], pipe_map[i][OUT]);
+    fprintf(stderr, "----\n");
 }
 
 /*
@@ -193,16 +197,11 @@ void fork_and_exec_last() {
 
     // bind pipe in
     int fd_in = pipe_get();
-    if(fd_in) {
-        if( dup2(fd_in, STDIN_FILENO) < 0 ) {
-            fprintf(stderr, "error in (1) dup2: %s\n", strerror(errno));
-        }
-    }
+    if(fd_in)   dup2(fd_in, STDIN_FILENO);
+    
 
     // bind out to stdout
-    if( dup2(connfd, STDOUT_FILENO) ) {    // duplicate socket on stdout
-        fprintf(stderr, "error in (2) dup2: %s\n", strerror(errno));
-    }
+    dup2(connfd, STDOUT_FILENO);    // duplicate socket on stdout
 
     if(DEBUG)   debug_fork_and_exec_last(fd_in);
 
@@ -215,13 +214,12 @@ void fork_and_exec_last() {
     } else if (pid ==0) {           // if child
 
         if( execvp(argv[0], argv)<0 ) {
-            fprintf(stderr, "Unknown command: [%s]\n", argv[0]);
+            printf("Unknown command: [%s].\n", argv[0]);
         }
         exit(0);
 
     } else {                        // if parent
         wait(NULL);
-        pipe_shift();
     }
 
 }
@@ -264,31 +262,24 @@ void fork_and_exec_pipe(char **cmd, int p_n) {
 
         }
 
-        // FIXME: bug here, I think
         // redirect STDOUT to pipe
         if(close(fd[IN]) < 0) {
             fprintf(stderr, "pipe close error (fd in): %s\n", strerror(errno));
             exit(EXIT_FAILURE);
         }
-        if(dup2(fd[OUT], STDOUT_FILENO) < 0) {
-            fprintf(stderr, "error in (3) dup2: %s\n", strerror(errno));
-        }
+        dup2(fd[OUT], STDOUT_FILENO);
 
         // DEBUG
         if(DEBUG)   debug_print_pipe_map();
 
         // redirect STDIN to pipe_map[0][IN]
         int fd_in = pipe_get();
-        if(fd_in) {
-            if( dup2(fd_in, STDIN_FILENO) < 0 ){
-                fprintf(stderr, "error in (4) dup2: %s\n", strerror(errno));
-            }
-        }
+        if(fd_in)   dup2(fd_in, STDIN_FILENO);
 
         if(DEBUG)   fprintf(stderr, "IN: %d\nOUT: %d\n", fd_in, fd[OUT]);
 
         if( execvp(cmd[0], cmd)<0 ) {
-            fprintf(stderr, "Unknown command: [%s]\n", argv[0]);
+            printf("Unknown command: [%s].\n", cmd[0]);
             close(fd[OUT]);
         }
 
@@ -315,20 +306,14 @@ void fork_and_exec_file(char **cmd, char *filepath) {
 
         // bind stdout to file
         int fd_file = open(filepath, O_WRONLY | O_TRUNC | O_CREAT, S_IRUSR | S_IRGRP | S_IWGRP | S_IWUSR);
-        if( dup2(fd_file, STDOUT_FILENO) < 0 ) {
-            fprintf(stderr, "error in (5) dup2: %s\n", strerror(errno));
-        }
+        dup2(fd_file, STDOUT_FILENO);
 
         // redirect STDIN to pipe_map[0][IN]
         int fd_in = pipe_get();
-        if(fd_in) {
-            if( dup2(fd_in, STDIN_FILENO) < 0 ) {
-                fprintf(stderr, "error in (6) dup2: %s\n", strerror(errno));
-            }
-        }
+        if(fd_in)   dup2(fd_in, STDIN_FILENO);
 
         if( execvp(cmd[0], cmd)<0 ) {
-            fprintf(stderr, "Unknown command: [%s]\n", argv[0]);
+            printf("Unknown command: [%s].\n", cmd[0]);
             close(fd_file);
         }
 
@@ -410,30 +395,29 @@ void command_handler() {
     }
 
     fork_and_exec_last();
+    pipe_shift();
 }
 
 
 // handle one socket connection
 void client_handler() {
 
-    if(DEBUG) {
-        if(dup2(connfd, STDERR_FILENO) < 0) {    // duplicate socket on stderr
-            fprintf(stderr, "error in (7) dup2: %s\n", strerror(errno));
-        }
-    }
-    if( dup2(connfd, STDOUT_FILENO) < 0 ) {
-        fprintf(stderr, "error in (8) dup2: %s\n", strerror(errno));
-    }
+    if(DEBUG)   dup2(connfd, STDERR_FILENO);
+    dup2(connfd, STDOUT_FILENO);
 
     // handle (first)
     welcome_msg(connfd);
 
     // handle (rest)
     while(1) {
-        if(!prompt(connfd)) return;
+        if(!prompt(connfd)) break;
         command_handler();
     }
 
+}
+
+void init_env() {
+    system("export PATH=bin:.");
 }
 
 
@@ -441,6 +425,8 @@ void client_handler() {
  * Main
  */
 int main(int argc, char *argv[]) {
+
+    init_env();
 
     /* variables */
     int listenfd = 0;
@@ -465,18 +451,20 @@ int main(int argc, char *argv[]) {
     /* socket - listen */
     listen(listenfd, BACKLOG); 
 
-    printf("start listen on port %d...\n", PORT);
+    fprintf(stderr, "start listen on port %d...\n", PORT);
     while(1) {
 
         /* socket - accept */
         connfd = accept(listenfd, (struct sockaddr*)NULL, NULL); 
-        printf("accepted connection: %d\n", connfd);
+        fprintf(stderr, "accepted connection: %d\n", connfd);
 
         client_handler();
 
         /* socket - close */
-        close(connfd);
-        printf("closed connection: %d\n", connfd);
+        if(close(STDOUT_FILENO) < 0) {  // we've dup2 socket to sdtout
+            fprintf(stderr, "close error: %s\n", strerror(errno));
+        }
+        fprintf(stderr, "closed connection: %d\n", connfd);
         sleep(1);
 
     }
