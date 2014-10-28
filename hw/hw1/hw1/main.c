@@ -7,17 +7,6 @@
  * Check NOTE.md for details.
  */
 
-/*
- * FIXME:
- * 1. will '>', '>>' be in the test data?
- * 2. sizes
- *
- * TODO:
- * 1. raise error if calling root command
- * 2. '>' piping
- */
-
-
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
@@ -30,7 +19,7 @@
 #include <sys/wait.h>
 #include <fcntl.h>
 
-#define DEBUG           1
+#define DEBUG           0
 
 #define SIZE_SEND_BUFF  10001
 #define SIZE_READ_BUFF  10001
@@ -68,9 +57,12 @@ int *pipe_create(int p_n) {
     if(pipe(fd) < 0)    fprintf(stderr, "Fork failed\n");
 
     if(pipe_map[p_n]) {     // TODO: can we barely do '='?
+        old_pipe = pipe_map[p_n];
+        /*
         old_pipe = malloc(sizeof(int) * 2);
         old_pipe[IN] = pipe_map[p_n][IN];
         old_pipe[OUT] = pipe_map[p_n][OUT];
+        */
     } else {
         old_pipe = NULL;
     }
@@ -82,7 +74,7 @@ int *pipe_create(int p_n) {
 
 int pipe_get() {
     if(!pipe_map[0])    return 0;
-    // OUT is close already as the pipe is created
+    // OUT is closed already as the pipe is created
     return pipe_map[0][IN];
 }
 
@@ -106,7 +98,7 @@ char **command_decode(char *command) {
         argv = realloc(argv, sizeof(char *) * argc);
 
         // if memory allocation failed
-        if(argv == NULL)    exit(-1);
+        if(argv == NULL)    exit(EXIT_FAILURE);
 
         argv[argc-1] = p;
         p = strtok(NULL, token);
@@ -202,7 +194,7 @@ void fork_and_exec_last() {
     // bind pipe in
     int fd_in = pipe_get();
     if(fd_in) {
-        if( dup2(fd_in, STDIN_FILENO) == -1 ) {
+        if( dup2(fd_in, STDIN_FILENO) < 0 ) {
             fprintf(stderr, "error in (1) dup2: %s\n", strerror(errno));
         }
     }
@@ -219,7 +211,7 @@ void fork_and_exec_last() {
 
     if(pid<0) {                     // if error
         fprintf(stderr, "Fork failed\n");
-        exit(-1);
+        exit(EXIT_FAILURE);
     } else if (pid ==0) {           // if child
 
         if( execvp(argv[0], argv)<0 ) {
@@ -245,7 +237,7 @@ void fork_and_exec_pipe(char **cmd, int p_n) {
 
     if(pid<0) {                     // if error
         fprintf(stderr, "Fork failed\n");
-        exit(-1);
+        exit(EXIT_FAILURE);
     } else if (pid ==0) {           // if child
 
         // output old_pipe content if exist
@@ -260,7 +252,7 @@ void fork_and_exec_pipe(char **cmd, int p_n) {
 
             if(close(old_pipe[IN]) < 0) {
                 fprintf(stderr, "pipe close error (old_pipe in): %s\n", strerror(errno));
-                exit(-1);
+                exit(EXIT_FAILURE);
             }
 
             if(DEBUG)   fprintf(stderr, "cating [%d] -> [%d]\n", old_pipe[IN], fd[OUT]);
@@ -276,9 +268,9 @@ void fork_and_exec_pipe(char **cmd, int p_n) {
         // redirect STDOUT to pipe
         if(close(fd[IN]) < 0) {
             fprintf(stderr, "pipe close error (fd in): %s\n", strerror(errno));
-            exit(-1);
+            exit(EXIT_FAILURE);
         }
-        if(dup2(fd[OUT], STDOUT_FILENO) == -1) {
+        if(dup2(fd[OUT], STDOUT_FILENO) < 0) {
             fprintf(stderr, "error in (3) dup2: %s\n", strerror(errno));
         }
 
@@ -288,7 +280,7 @@ void fork_and_exec_pipe(char **cmd, int p_n) {
         // redirect STDIN to pipe_map[0][IN]
         int fd_in = pipe_get();
         if(fd_in) {
-            if( dup2(fd_in, STDIN_FILENO) == -1 ){
+            if( dup2(fd_in, STDIN_FILENO) < 0 ){
                 fprintf(stderr, "error in (4) dup2: %s\n", strerror(errno));
             }
         }
@@ -306,7 +298,7 @@ void fork_and_exec_pipe(char **cmd, int p_n) {
         wait(NULL);
         if(close(fd[OUT]) < 0) {
             fprintf(stderr, "pipe close error (fd out): %s\n", strerror(errno));
-            exit(-1);
+            exit(EXIT_FAILURE);
         }
     }
 }
@@ -318,19 +310,19 @@ void fork_and_exec_file(char **cmd, char *filepath) {
 
     if(pid<0) {                     // if error
         fprintf(stderr, "Fork failed\n");
-        exit(-1);
+        exit(EXIT_FAILURE);
     } else if (pid ==0) {           // if child
 
         // bind stdout to file
         int fd_file = open(filepath, O_WRONLY | O_TRUNC | O_CREAT, S_IRUSR | S_IRGRP | S_IWGRP | S_IWUSR);
-        if( dup2(fd_file, STDOUT_FILENO) == -1 ) {
+        if( dup2(fd_file, STDOUT_FILENO) < 0 ) {
             fprintf(stderr, "error in (5) dup2: %s\n", strerror(errno));
         }
 
         // redirect STDIN to pipe_map[0][IN]
         int fd_in = pipe_get();
         if(fd_in) {
-            if( dup2(fd_in, STDIN_FILENO) == -1 ) {
+            if( dup2(fd_in, STDIN_FILENO) < 0 ) {
                 fprintf(stderr, "error in (6) dup2: %s\n", strerror(errno));
             }
         }
@@ -425,11 +417,11 @@ void command_handler() {
 void client_handler() {
 
     if(DEBUG) {
-        if(dup2(connfd, STDERR_FILENO) == -1) {    // duplicate socket on stderr
+        if(dup2(connfd, STDERR_FILENO) < 0) {    // duplicate socket on stderr
             fprintf(stderr, "error in (7) dup2: %s\n", strerror(errno));
         }
     }
-    if( dup2(connfd, STDOUT_FILENO) == -1 ) {
+    if( dup2(connfd, STDOUT_FILENO) < 0 ) {
         fprintf(stderr, "error in (8) dup2: %s\n", strerror(errno));
     }
 
