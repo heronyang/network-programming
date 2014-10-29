@@ -158,17 +158,11 @@ int prompt() {
     memset(send_buff, 0, SIZE_SEND_BUFF); 
     memset(read_buff, 0, SIZE_READ_BUFF); 
 
-    snprintf(send_buff, SIZE_SEND_BUFF, "$ ");
+    snprintf(send_buff, SIZE_SEND_BUFF, "%% ");
     write(connfd, send_buff, strlen(send_buff)); 
     // r = read(connfd, read_buff, SIZE_READ_BUFF);
     r = read_helper(read_buff);
     if(r == 1)  return COMMAND_HANDLED;
-
-    int i;
-    fprintf(stderr, "==== r=%d\n", r);
-    for( i=0 ; i<30 ; i++ ) {
-        fprintf(stderr, "read_buff[%d] = %c\n", i, read_buff[i]);
-    }
 
     argv = command_decode(read_buff);
     if(strcmp(argv[0], "exit") == 0)  return 0;   // same as end
