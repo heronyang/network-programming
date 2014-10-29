@@ -6,7 +6,7 @@ PORT=33916
 
 main: $(OBJ)
 	$(CC) -o $@ $^
-	cd ras/bin && $(MAKE)
+	cd src && $(MAKE)
 	rm *.o
 
 %.o: %.c
@@ -19,7 +19,7 @@ run_client:
 	@nc localhost $(PORT)
 
 clean:
-	cd ras/bin && $(MAKE) clean
+	cd src && $(MAKE) clean
 	rm main *.o
 
 client:
