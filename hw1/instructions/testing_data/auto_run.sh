@@ -21,8 +21,8 @@
     # └── test6.txt
 
 OUTPUT_DIR="./result"
-SERVER_HOST="nplinux1.cs.nctu.edu.tw"
-#SERVER_HOST="localhost"
+#SERVER_HOST="nplinux1.cs.nctu.edu.tw"
+SERVER_HOST="localhost"
 SERVER_PORT="33916"
 
 mkdir -p $OUTPUT_DIR   # create the output directory if not exists

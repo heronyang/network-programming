@@ -36,6 +36,8 @@
 
 #define COMMAND_HANDLED -1
 
+#define SKIP_SHIFT      2
+
 /*
  * Globals
  */
@@ -293,6 +295,8 @@ int fork_and_exec_last() {
 // simple exec (no pipe included, but for piping OUTs)
 int fork_and_exec_pipe(char **cmd, int p_n) {
 
+    if(strcmp(cmd[0], "cat")==0)    return SKIP_SHIFT;
+
     // create pipe
     int *fd = pipe_create(p_n);
 
@@ -461,14 +465,16 @@ void command_handler() {
                 is_pipe = TRUE;
 
                 //
+                int r;
                 char **argv_s = extract_command(i);
 
                 if(DEBUG)   debug_print_command(argv_s, p_n);
 
-                if(fork_and_exec_pipe(argv_s, p_n) == EXIT_FAILURE) {
+                if( (r=fork_and_exec_pipe(argv_s, p_n)) == EXIT_FAILURE) {
                     return;
+                } else if (r != SKIP_SHIFT) {
+                    pipe_shift();
                 }
-                pipe_shift();
 
                 break;
 
