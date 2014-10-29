@@ -19,7 +19,7 @@
 #include <sys/wait.h>
 #include <fcntl.h>
 
-#define DEBUG           0
+#define DEBUG           1
 
 #define SIZE_SEND_BUFF  10001
 #define SIZE_READ_BUFF  10001
@@ -73,6 +73,8 @@ int pipe_get() {
 
 void pipe_shift() {
 
+    fprintf(stderr, "pipe_shfit--\n");
+
     int i;
     for(i=0 ; i<(MAX_PIPE_NUM-1) ; i++) pipe_map[i] = pipe_map[i+1];
 
@@ -117,20 +119,20 @@ int prompt() {
     r = read(connfd, read_buff, sizeof(read_buff));
 
     argv = command_decode(read_buff);
-    if(strcmp(argv[0], "exit")==0) {
-        close(connfd);
-        return 0;   // same as end
-    }
+    if(strcmp(argv[0], "exit")==0)  return 0;   // same as end
 
     return r;
+
 }
 
 void welcome_msg() {
+
     char *msg = "****************************************\n\
 ** Welcome to the information server. **\n\
 ****************************************\n";
     snprintf(send_buff, sizeof(send_buff), msg);
     write(connfd, send_buff, strlen(send_buff)); 
+
 }
 
 /*
@@ -157,11 +159,11 @@ void debug_print_command(char** argv_s, int p_n) {
 
 void debug_fork_and_exec_last(int fd_in) {
     int i;
-    printf("\n==========\n(rest)exec: ");
+    fprintf(stderr, "\n==========\n(rest)exec: ");
     for( i=0 ; argv[i]!=NULL ; i++ ){
-        printf(".%s", argv[i]);
+        fprintf(stderr, ".%s", argv[i]);
     }
-    printf("\n");
+    fprintf(stderr, "\n");
 
     fprintf(stderr, "last...\n");
     fprintf(stderr, "----\n");
@@ -182,30 +184,34 @@ void debug_print_pipe_map() {
 }
 
 /*
- * Handler
+ * Handler (fork_and_exec)
  */
 // simple exec (no pipe included), for last command (no following pipe)
 int fork_and_exec_last() {
 
-    if(argc==0) return EXIT_SUCCESS;
+    fprintf(stderr, "_last: argc = %d\n", argc);
 
-    // bind pipe in
-    int fd_in = pipe_get();
-    if(fd_in)   dup2(fd_in, STDIN_FILENO);
-    
-
-    // bind out to stdout
-    dup2(connfd, STDOUT_FILENO);    // duplicate socket on stdout
-
-    if(DEBUG)   debug_fork_and_exec_last(fd_in);
+    if(argc == 0) return EXIT_FAILURE;
 
     pid_t pid;
     pid = fork();
 
-    if(pid<0) {                     // if error
+    if(pid < 0) {                     // if error
+
         fprintf(stderr, "Fork failed\n");
         exit(EXIT_FAILURE);
-    } else if (pid ==0) {           // if child
+
+    } else if (pid == 0) {           // if child
+
+        // bind pipe in
+        int fd_in = pipe_get();
+        if(fd_in)   dup2(fd_in, STDIN_FILENO);
+
+        if(DEBUG)   debug_fork_and_exec_last(fd_in);
+        
+        // bind out to stdout
+        dup2(connfd, STDOUT_FILENO);    // duplicate socket on stdout
+
 
         if( argv[0][0]=='/' || execvp(argv[0], argv)<0 ) {
             printf("Unknown command: [%s].\n", argv[0]);
@@ -214,9 +220,11 @@ int fork_and_exec_last() {
         exit(EXIT_SUCCESS);
 
     } else {                        // if parent
+
         int return_val;    
         waitpid(pid, &return_val, 0);
-        if( WEXITSTATUS(return_val) == EXIT_FAILURE )  return EXIT_FAILURE;
+        if(WEXITSTATUS(return_val) == EXIT_FAILURE)  return EXIT_FAILURE;
+
     }
 
     return EXIT_SUCCESS;
@@ -233,8 +241,10 @@ int fork_and_exec_pipe(char **cmd, int p_n) {
     pid = fork();
 
     if(pid<0) {                     // if error
+
         fprintf(stderr, "Fork failed\n");
         exit(EXIT_FAILURE);
+
     } else if (pid ==0) {           // if child
 
         // output old_pipe content if exist
@@ -252,7 +262,6 @@ int fork_and_exec_pipe(char **cmd, int p_n) {
                 exit(EXIT_FAILURE);
             }
 
-            if(DEBUG)   fprintf(stderr, "cating [%d] -> [%d]\n", old_pipe[IN], fd[OUT]);
             if(DEBUG)   debug_print_pipe_cat_content(count);
 
             if( write(fd[OUT], pipe_buff, count) < 0 ) {
@@ -275,9 +284,7 @@ int fork_and_exec_pipe(char **cmd, int p_n) {
         int fd_in = pipe_get();
         if(fd_in)   dup2(fd_in, STDIN_FILENO);
 
-        if(DEBUG)   fprintf(stderr, "IN: %d\nOUT: %d\n", fd_in, fd[OUT]);
-
-        if( argv[0][0]=='/' || execvp(cmd[0], cmd)<0 ) {
+        if(argv[0][0]=='/' || execvp(cmd[0], cmd)<0) {
             printf("Unknown command: [%s].\n", cmd[0]);
             close(fd[OUT]);
             exit(EXIT_FAILURE);
@@ -286,26 +293,32 @@ int fork_and_exec_pipe(char **cmd, int p_n) {
         exit(EXIT_SUCCESS);
 
     } else {                        // if parent
+
         int return_val;    
         waitpid(pid, &return_val, 0);
         if( close(fd[OUT]) < 0 ) {
             fprintf(stderr, "pipe close error (fd out): %s\n", strerror(errno));
             exit(EXIT_FAILURE);
         }
-        if( WEXITSTATUS(return_val) == EXIT_FAILURE )  return EXIT_FAILURE;
+        if(WEXITSTATUS(return_val) == EXIT_FAILURE) return EXIT_FAILURE;
+
     }
 
     return EXIT_SUCCESS;
+
 }
 
+// output to file ('>')
 int fork_and_exec_file(char **cmd, char *filepath) {
 
     pid_t pid;
     pid = fork();
 
     if(pid<0) {                     // if error
+
         fprintf(stderr, "Fork failed\n");
         exit(EXIT_FAILURE);
+
     } else if (pid ==0) {           // if child
 
         // bind stdout to file
@@ -333,8 +346,12 @@ int fork_and_exec_file(char **cmd, char *filepath) {
     }
 
     return EXIT_SUCCESS;
+
 }
 
+/*
+ * Handler (command, client)
+ */
 // helper tool
 char **extract_command(int len) {
 
@@ -360,6 +377,7 @@ char **extract_command(int len) {
     argv_s[len] = NULL;
 
     return argv_s;
+
 }
 
 // a whole line as input (pipe may be included)
@@ -395,6 +413,7 @@ void command_handler() {
 
             }
             if(argv[i] && argv[i][0] == '>') {
+
                 char *filepath = argv[i+1];
                 char **argv_s = extract_command(i);
                 if(!filepath)   fprintf(stderr, "filepath error\n");
@@ -402,22 +421,22 @@ void command_handler() {
                     return;
                 }
                 return;
+
             }
         }
+
         if(!is_pipe)    break;
 
     }
 
     if(fork_and_exec_last() == EXIT_FAILURE)    return;
     pipe_shift();
+
 }
 
 
 // handle one socket connection
 void client_handler() {
-
-    if(DEBUG)   dup2(connfd, STDERR_FILENO);
-    dup2(connfd, STDOUT_FILENO);
 
     // handle (first)
     welcome_msg(connfd);
@@ -430,10 +449,12 @@ void client_handler() {
 
 }
 
+/*
+ * Other
+ */
 void init_env() {
     system("export PATH=bin:.");
 }
-
 
 /*
  * Main
@@ -475,7 +496,7 @@ int main(int argc, char *argv[]) {
         client_handler();
 
         /* socket - close */
-        if(close(STDOUT_FILENO) < 0) {  // we've dup2 socket to sdtout
+        if(close(connfd) < 0) {
             fprintf(stderr, "close error: %s\n", strerror(errno));
         }
         fprintf(stderr, "closed connection: %d\n", connfd);
@@ -484,4 +505,5 @@ int main(int argc, char *argv[]) {
     }
 
     return 0;
+    //
 }
