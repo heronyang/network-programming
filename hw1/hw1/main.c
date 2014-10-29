@@ -56,7 +56,7 @@ int connfd = 0;
 int *pipe_create(int p_n) {
 
     int *fd = malloc(sizeof(int) * 2);
-    if(pipe(fd) < 0)    fprintf(stderr, "Fork failed\n");
+    if(pipe(fd) < 0)    fprintf(stderr, "pipe failed\n");
 
     if(pipe_map[p_n])   old_pipe = pipe_map[p_n];
     else                old_pipe = NULL;
