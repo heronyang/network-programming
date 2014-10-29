@@ -19,7 +19,7 @@
 #include <sys/wait.h>
 #include <fcntl.h>
 
-#define DEBUG           1
+#define DEBUG           0
 
 #define SIZE_SEND_BUFF  10001
 #define SIZE_READ_BUFF  10001
@@ -72,8 +72,6 @@ int pipe_get() {
 }
 
 void pipe_shift() {
-
-    fprintf(stderr, "pipe_shfit--\n");
 
     int i;
     for(i=0 ; i<(MAX_PIPE_NUM-1) ; i++) pipe_map[i] = pipe_map[i+1];
@@ -212,10 +210,11 @@ int fork_and_exec_last() {
         
         // bind out to stdout
         dup2(connfd, STDOUT_FILENO);    // duplicate socket on stdout
+        if(!DEBUG)  dup2(connfd, STDERR_FILENO);
 
 
         if( argv[0][0]=='/' || execvp(argv[0], argv)<0 ) {
-            printf("Unknown command: [%s].\n", argv[0]);
+            fprintf(stderr, "Unknown command: [%s].\n", argv[0]);
             exit(EXIT_FAILURE);
         }
         exit(EXIT_SUCCESS);
@@ -277,6 +276,7 @@ int fork_and_exec_pipe(char **cmd, int p_n) {
             exit(EXIT_FAILURE);
         }
         dup2(fd[OUT], STDOUT_FILENO);
+        if(!DEBUG)  dup2(connfd, STDERR_FILENO);
 
         // DEBUG
         if(DEBUG)   debug_print_pipe_map();
@@ -286,7 +286,7 @@ int fork_and_exec_pipe(char **cmd, int p_n) {
         if(fd_in)   dup2(fd_in, STDIN_FILENO);
 
         if(cmd[0][0]=='/' || execvp(cmd[0], cmd)<0) {
-            printf("Unknown command: [%s].\n", cmd[0]);
+            fprintf(stderr, "Unknown command: [%s].\n", cmd[0]);
             close(fd[OUT]);
             exit(EXIT_FAILURE);
         }
@@ -325,13 +325,14 @@ int fork_and_exec_file(char **cmd, char *filepath) {
         // bind stdout to file
         int fd_file = open(filepath, O_WRONLY | O_TRUNC | O_CREAT, S_IRUSR | S_IRGRP | S_IWGRP | S_IWUSR);
         dup2(fd_file, STDOUT_FILENO);
+        if(!DEBUG)  dup2(connfd, STDERR_FILENO);
 
         // redirect STDIN to pipe_map[0][IN]
         int fd_in = pipe_get();
         if(fd_in)   dup2(fd_in, STDIN_FILENO);
 
         if( argv[0][0]=='/' || execvp(cmd[0], cmd)<0 ) {
-            printf("Unknown command: [%s].\n", cmd[0]);
+            fprintf(stderr, "Unknown command: [%s].\n", cmd[0]);
             close(fd_file);
             exit(EXIT_FAILURE);
         }
