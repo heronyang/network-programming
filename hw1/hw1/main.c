@@ -189,9 +189,10 @@ void debug_print_pipe_map() {
 // simple exec (no pipe included), for last command (no following pipe)
 int fork_and_exec_last() {
 
-    fprintf(stderr, "_last: argc = %d\n", argc);
-
-    if(argc == 0) return EXIT_FAILURE;
+    if(argc == 0) {
+        fprintf(stderr, "for_and_exec_last: do nothing\n");
+        return EXIT_FAILURE;
+    }
 
     pid_t pid;
     pid = fork();
@@ -284,7 +285,7 @@ int fork_and_exec_pipe(char **cmd, int p_n) {
         int fd_in = pipe_get();
         if(fd_in)   dup2(fd_in, STDIN_FILENO);
 
-        if(argv[0][0]=='/' || execvp(cmd[0], cmd)<0) {
+        if(cmd[0][0]=='/' || execvp(cmd[0], cmd)<0) {
             printf("Unknown command: [%s].\n", cmd[0]);
             close(fd[OUT]);
             exit(EXIT_FAILURE);
@@ -461,7 +462,7 @@ void init_env() {
  */
 int main(int argc, char *argv[]) {
 
-    init_env();
+    //init_env();
 
     /* variables */
     int listenfd = 0;
