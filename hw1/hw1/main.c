@@ -19,7 +19,7 @@
 #include <sys/wait.h>
 #include <fcntl.h>
 
-#define DEBUG           1
+#define DEBUG           0
 
 #define SIZE_SEND_BUFF  10001
 #define SIZE_READ_BUFF  10001
@@ -56,16 +56,8 @@ int *pipe_create(int p_n) {
     int *fd = malloc(sizeof(int) * 2);
     if(pipe(fd) < 0)    fprintf(stderr, "Fork failed\n");
 
-    if(pipe_map[p_n]) {     // TODO: can we barely do '='?
-        old_pipe = pipe_map[p_n];
-        /*
-        old_pipe = malloc(sizeof(int) * 2);
-        old_pipe[IN] = pipe_map[p_n][IN];
-        old_pipe[OUT] = pipe_map[p_n][OUT];
-        */
-    } else {
-        old_pipe = NULL;
-    }
+    if(pipe_map[p_n])   old_pipe = pipe_map[p_n];
+    else                old_pipe = NULL;
 
     pipe_map[p_n] = fd;
     return fd;
@@ -73,22 +65,24 @@ int *pipe_create(int p_n) {
 }
 
 int pipe_get() {
+
     if(!pipe_map[0])    return 0;
-    // OUT is closed already as the pipe is created
     return pipe_map[0][IN];
+
 }
 
 void pipe_shift() {
+
     int i;
-    for( i=0 ; i<(MAX_PIPE_NUM-1) ; i++ ){
-        pipe_map[i] = pipe_map[i+1];
-    }
+    for(i=0 ; i<(MAX_PIPE_NUM-1) ; i++) pipe_map[i] = pipe_map[i+1];
+
 }
 
 /*
  * Shell
  */
 char **command_decode(char *command) {
+
     char *token = " \t\n\r";
     char *p = strtok(command, token);
 
@@ -97,7 +91,6 @@ char **command_decode(char *command) {
         argc ++;
         argv = realloc(argv, sizeof(char *) * argc);
 
-        // if memory allocation failed
         if(argv == NULL)    exit(EXIT_FAILURE);
 
         argv[argc-1] = p;
@@ -106,9 +99,10 @@ char **command_decode(char *command) {
 
     // for the last extra one
     argv = realloc(argv, sizeof(char *) * (argc+1));
-    argv[argc] = 0;     // set last one as NULL
+    argv[argc] = NULL;
 
     return argv;
+
 }
 
 int prompt() {
@@ -191,9 +185,9 @@ void debug_print_pipe_map() {
  * Handler
  */
 // simple exec (no pipe included), for last command (no following pipe)
-void fork_and_exec_last() {
+int fork_and_exec_last() {
 
-    if(argc==0) return;
+    if(argc==0) return EXIT_SUCCESS;
 
     // bind pipe in
     int fd_in = pipe_get();
@@ -213,19 +207,24 @@ void fork_and_exec_last() {
         exit(EXIT_FAILURE);
     } else if (pid ==0) {           // if child
 
-        if( execvp(argv[0], argv)<0 ) {
+        if( argv[0][0]=='/' || execvp(argv[0], argv)<0 ) {
             printf("Unknown command: [%s].\n", argv[0]);
+            exit(EXIT_FAILURE);
         }
-        exit(0);
+        exit(EXIT_SUCCESS);
 
     } else {                        // if parent
-        wait(NULL);
+        int return_val;    
+        waitpid(pid, &return_val, 0);
+        if( WEXITSTATUS(return_val) == EXIT_FAILURE )  return EXIT_FAILURE;
     }
+
+    return EXIT_SUCCESS;
 
 }
 
 // simple exec (no pipe included, but for piping OUTs)
-void fork_and_exec_pipe(char **cmd, int p_n) {
+int fork_and_exec_pipe(char **cmd, int p_n) {
 
     // create pipe
     int *fd = pipe_create(p_n);
@@ -278,23 +277,28 @@ void fork_and_exec_pipe(char **cmd, int p_n) {
 
         if(DEBUG)   fprintf(stderr, "IN: %d\nOUT: %d\n", fd_in, fd[OUT]);
 
-        if( execvp(cmd[0], cmd)<0 ) {
+        if( argv[0][0]=='/' || execvp(cmd[0], cmd)<0 ) {
             printf("Unknown command: [%s].\n", cmd[0]);
             close(fd[OUT]);
+            exit(EXIT_FAILURE);
         }
 
-        exit(0);
+        exit(EXIT_SUCCESS);
 
     } else {                        // if parent
-        wait(NULL);
-        if(close(fd[OUT]) < 0) {
+        int return_val;    
+        waitpid(pid, &return_val, 0);
+        if( close(fd[OUT]) < 0 ) {
             fprintf(stderr, "pipe close error (fd out): %s\n", strerror(errno));
             exit(EXIT_FAILURE);
         }
+        if( WEXITSTATUS(return_val) == EXIT_FAILURE )  return EXIT_FAILURE;
     }
+
+    return EXIT_SUCCESS;
 }
 
-void fork_and_exec_file(char **cmd, char *filepath) {
+int fork_and_exec_file(char **cmd, char *filepath) {
 
     pid_t pid;
     pid = fork();
@@ -312,18 +316,23 @@ void fork_and_exec_file(char **cmd, char *filepath) {
         int fd_in = pipe_get();
         if(fd_in)   dup2(fd_in, STDIN_FILENO);
 
-        if( execvp(cmd[0], cmd)<0 ) {
+        if( argv[0][0]=='/' || execvp(cmd[0], cmd)<0 ) {
             printf("Unknown command: [%s].\n", cmd[0]);
             close(fd_file);
+            exit(EXIT_FAILURE);
         }
 
-        exit(0);
+        exit(EXIT_SUCCESS);
 
     } else {                        // if parent
 
-        wait(NULL);
+        int return_val;    
+        waitpid(pid, &return_val, 0);
+        if( WEXITSTATUS(return_val) == EXIT_FAILURE )  return EXIT_FAILURE;
 
     }
+
+    return EXIT_SUCCESS;
 }
 
 // helper tool
@@ -377,7 +386,9 @@ void command_handler() {
 
                 if(DEBUG)   debug_print_command(argv_s, p_n);
 
-                fork_and_exec_pipe(argv_s, p_n);
+                if(fork_and_exec_pipe(argv_s, p_n) == EXIT_FAILURE) {
+                    return;
+                }
                 pipe_shift();
 
                 break;
@@ -387,14 +398,17 @@ void command_handler() {
                 char *filepath = argv[i+1];
                 char **argv_s = extract_command(i);
                 if(!filepath)   fprintf(stderr, "filepath error\n");
-                fork_and_exec_file(argv_s, filepath);
+                if( fork_and_exec_file(argv_s, filepath) == EXIT_FAILURE ) {
+                    return;
+                }
                 return;
             }
         }
         if(!is_pipe)    break;
+
     }
 
-    fork_and_exec_last();
+    if(fork_and_exec_last() == EXIT_FAILURE)    return;
     pipe_shift();
 }
 
