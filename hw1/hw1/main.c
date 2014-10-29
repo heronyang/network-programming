@@ -80,6 +80,13 @@ void pipe_shift() {
 
 }
 
+void pipe_reset() {
+
+    int i;
+    for(i=0 ; i<MAX_PIPE_NUM ; i++) pipe_map[i] = NULL;
+
+}
+
 /*
  * Shell
  */
@@ -143,7 +150,6 @@ int read_helper(char *buf) {
     char c;
     while(1) {
         if(!read(connfd, &c, 1))  break;
-        fprintf(stderr, "get [%d]:%c\n", count, c);
         buf[count++] = c;
         if(c == '\n')   break;
     }
@@ -243,10 +249,7 @@ void debug_print_pipe_map() {
 // simple exec (no pipe included), for last command (no following pipe)
 int fork_and_exec_last() {
 
-    if(argc == 0) {
-        fprintf(stderr, "for_and_exec_last: do nothing\n");
-        return EXIT_FAILURE;
-    }
+    if(argc == 0)   return EXIT_FAILURE;
 
     pid_t pid;
     pid = fork();
@@ -492,9 +495,20 @@ void command_handler() {
 
 }
 
+void init_env() {
+
+    // change to working directory
+    chdir("./ras");
+
+    // only support custom bin/
+    setenv("PATH", "bin:.", TRUE);
+
+}
 
 // handle one socket connection
 void client_handler() {
+
+    init_env();
 
     // handle (first)
     welcome_msg();
@@ -510,24 +524,9 @@ void client_handler() {
 }
 
 /*
- * Other
- */
-void init_env() {
-
-    // change to working directory
-    chdir("./ras");
-
-    // only support custom bin/
-    setenv("PATH", "bin:.", TRUE);
-
-}
-
-/*
  * Main
  */
 int main(int argc, char *argv[]) {
-
-    init_env();
 
     /* variables */
     int listenfd = 0;
@@ -566,6 +565,8 @@ int main(int argc, char *argv[]) {
             fprintf(stderr, "close error: %s\n", strerror(errno));
         }
         fprintf(stderr, "closed connection: %d\n", connfd);
+
+        pipe_reset();
         sleep(1);
 
     }
