@@ -34,6 +34,8 @@
 #define IN              0
 #define OUT             1
 
+#define COMMAND_HANDLED -1
+
 /*
  * Globals
  */
@@ -105,6 +107,37 @@ char **command_decode(char *command) {
 
 }
 
+void socket_error_message() {
+    memset(send_buff, 0, sizeof(send_buff)); 
+    snprintf(send_buff, sizeof(send_buff), "Invalid Inputs.\n");
+    write(connfd, send_buff, strlen(send_buff)); 
+}
+
+void setenv_helper() {
+    if(argc != 3) {
+        socket_error_message();
+        return;
+    }
+    setenv(argv[1], argv[2], TRUE);
+}
+
+void printenv_helper() {
+
+    if(argc != 2) {
+        socket_error_message();
+        return;
+    }
+
+    char *r;
+    r = getenv(argv[1]);
+
+    memset(send_buff, 0, sizeof(send_buff)); 
+    if(r)   snprintf(send_buff, sizeof(send_buff), "%s=%s\n", argv[1], r);
+    else    snprintf(send_buff, sizeof(send_buff), "Variable Not Found.\n");
+    write(connfd, send_buff, strlen(send_buff)); 
+
+}
+
 int prompt() {
 
     int r = 0;
@@ -117,7 +150,15 @@ int prompt() {
     r = read(connfd, read_buff, sizeof(read_buff));
 
     argv = command_decode(read_buff);
-    if(strcmp(argv[0], "exit")==0)  return 0;   // same as end
+    if(strcmp(argv[0], "exit") == 0)  return 0;   // same as end
+    if(strcmp(argv[0], "setenv") == 0) {
+        setenv_helper();
+        return COMMAND_HANDLED;
+    }
+    if(strcmp(argv[0], "printenv") == 0) {
+        printenv_helper();
+        return COMMAND_HANDLED;
+    }
 
     return r;
 
@@ -441,11 +482,13 @@ void command_handler() {
 void client_handler() {
 
     // handle (first)
-    welcome_msg(connfd);
+    welcome_msg();
 
     // handle (rest)
     while(1) {
-        if(!prompt(connfd)) break;
+        int r = prompt();
+        if(!r)  break;
+        if(r == COMMAND_HANDLED) continue;
         command_handler();
     }
 
@@ -455,7 +498,13 @@ void client_handler() {
  * Other
  */
 void init_env() {
-    system("export PATH=bin:.");
+
+    // change to working directory
+    chdir("./ras");
+
+    // only support custom bin/
+    setenv("PATH", "bin:.", TRUE);
+
 }
 
 /*
@@ -463,7 +512,7 @@ void init_env() {
  */
 int main(int argc, char *argv[]) {
 
-    //init_env();
+    init_env();
 
     /* variables */
     int listenfd = 0;
