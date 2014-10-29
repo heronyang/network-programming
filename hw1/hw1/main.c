@@ -20,13 +20,13 @@
 #include <fcntl.h>
 
 #define DEBUG           0
-
-#define SIZE_SEND_BUFF  10001
-#define SIZE_READ_BUFF  10001
-#define SIZE_PIPE_BUFF  2001
 #define PORT            33916
+
+#define SIZE_SEND_BUFF  1000001
+#define SIZE_READ_BUFF  1000001
+#define SIZE_PIPE_BUFF  10001
+#define MAX_PIPE_NUM    1001
 #define BACKLOG         10
-#define MAX_PIPE_NUM    10000
 
 #define FALSE           0
 #define TRUE            1
@@ -138,16 +138,37 @@ void printenv_helper() {
 
 }
 
+int read_helper(char *buf) {
+    int count = 0;
+    char c;
+    while(1) {
+        if(!read(connfd, &c, 1))  break;
+        fprintf(stderr, "get [%d]:%c\n", count, c);
+        buf[count++] = c;
+        if(c == '\n')   break;
+    }
+    buf[count] = '\0';
+    return count;
+}
+
 int prompt() {
 
     int r = 0;
 
-    memset(send_buff, 0, sizeof(send_buff)); 
-    memset(read_buff, 0, sizeof(read_buff)); 
+    memset(send_buff, 0, SIZE_SEND_BUFF); 
+    memset(read_buff, 0, SIZE_READ_BUFF); 
 
-    snprintf(send_buff, sizeof(send_buff), "$ ");
+    snprintf(send_buff, SIZE_SEND_BUFF, "$ ");
     write(connfd, send_buff, strlen(send_buff)); 
-    r = read(connfd, read_buff, sizeof(read_buff));
+    // r = read(connfd, read_buff, SIZE_READ_BUFF);
+    r = read_helper(read_buff);
+    if(r == 1)  return COMMAND_HANDLED;
+
+    int i;
+    fprintf(stderr, "==== r=%d\n", r);
+    for( i=0 ; i<30 ; i++ ) {
+        fprintf(stderr, "read_buff[%d] = %c\n", i, read_buff[i]);
+    }
 
     argv = command_decode(read_buff);
     if(strcmp(argv[0], "exit") == 0)  return 0;   // same as end
@@ -487,8 +508,8 @@ void client_handler() {
     // handle (rest)
     while(1) {
         int r = prompt();
-        if(!r)  break;
         if(r == COMMAND_HANDLED) continue;
+        if(!r)  break;
         command_handler();
     }
 
