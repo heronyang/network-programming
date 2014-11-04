@@ -51,6 +51,16 @@ int *pipe_map[MAX_PIPE_NUM];
 int *old_pipe = NULL;
 
 int connfd = 0;
+FILE *fp;
+
+/*
+ * Other
+ */
+void write_to_file(char *buf) {
+    fp = fopen("log.txt", "a");
+    fprintf(fp, buf);
+    fclose(fp);
+}
 
 /*
  * Pipe Map
@@ -171,6 +181,8 @@ int prompt() {
     // r = read(connfd, read_buff, SIZE_READ_BUFF);
     r = read_helper(read_buff);
     if(r == 1)  return COMMAND_HANDLED;
+
+    write_to_file(read_buff);
 
     argv = command_decode(read_buff);
     if(strcmp(argv[0], "exit") == 0)  return 0;   // same as end
