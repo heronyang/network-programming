@@ -16,28 +16,36 @@ Unknown command: [UNKNOWN_COMMAND!].
    5    5    5 
    6    1 bin
    7    2 ls.txt
-   8    3 test1.txt
-   9    4 test2.txt
-  10    5 test3.txt
-  11    6 test.html
+   8    3 outtest1.txt
+   9    4 outtest2.txt
+  10    5 test1.txt
+  11    6 test2.txt
+  12    7 test3.txt
+  13    8 test.html
 % ls |4 ls |3
 % ls | number | cat
 bin
 ls.txt
+outtest1.txt
+outtest2.txt
 test1.txt
 test2.txt
 test3.txt
 test.html
 bin
 ls.txt
+outtest1.txt
+outtest2.txt
 test1.txt
 test2.txt
 test3.txt
 test.html
    1 bin
    2 ls.txt
-   3 test1.txt
-   4 test2.txt
-   5 test3.txt
-   6 test.html
+   3 outtest1.txt
+   4 outtest2.txt
+   5 test1.txt
+   6 test2.txt
+   7 test3.txt
+   8 test.html
 % exit

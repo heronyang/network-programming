@@ -16,16 +16,16 @@ PATH=.
 % ls
 Unknown command: [ls].
 % setenv PATH bin
-% ls -al bin
-total 228
-drwxr-xr-x 2 hsiangyuy cs   4096 Oct 30 01:11 .
-drwxr-xr-x 3 hsiangyuy cs   4096 Oct 30 01:39 ..
--rwxr-xr-x 1 hsiangyuy cs  52064 Oct 30 01:39 cat
--rwxr-xr-x 1 hsiangyuy cs 118432 Oct 30 01:39 ls
--rwxr-xr-x 1 hsiangyuy cs   6821 Oct 30 01:39 noop
--rwxr-xr-x 1 hsiangyuy cs  12031 Oct 30 01:39 number
--rwxr-xr-x 1 hsiangyuy cs   8269 Oct 30 01:39 removetag
--rwxr-xr-x 1 hsiangyuy cs   8851 Oct 30 01:39 removetag0
+% setenv LANG en_US
+% printenv LANG
+LANG=en_US
+% ls bin
+cat
+ls
+noop
+number
+removetag
+removetag0
 % date
 Unknown command: [date].
 % exit

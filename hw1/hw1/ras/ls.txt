@@ -1,0 +1,4 @@
+   1 bin
+   2 outtest1.txt
+   3 outtest2.txt
+   4 test.html
