@@ -19,24 +19,10 @@
 #include <sys/wait.h>
 #include <fcntl.h>
 
+#include "constant.h"
+#include "pipe.h"
+
 #define DEBUG           0
-#define PORT            33916
-
-#define SIZE_SEND_BUFF  1000001
-#define SIZE_READ_BUFF  1000001
-#define SIZE_PIPE_BUFF  10001
-#define MAX_PIPE_NUM    1001
-#define BACKLOG         10
-
-#define FALSE           0
-#define TRUE            1
-
-#define IN              0
-#define OUT             1
-
-#define COMMAND_HANDLED -1
-
-#define SKIP_SHIFT      2
 
 /*
  * Globals
@@ -47,8 +33,6 @@ char pipe_buff[SIZE_PIPE_BUFF];
 
 char **argv;
 int argc = 0;
-int *pipe_map[MAX_PIPE_NUM];
-int *old_pipe = NULL;
 
 int connfd = 0;
 FILE *fp;
@@ -60,43 +44,6 @@ void write_to_file(char *buf) {
     fp = fopen("log.txt", "a");
     fprintf(fp, buf);
     fclose(fp);
-}
-
-/*
- * Pipe Map
- */
-int *pipe_create(int p_n) {
-
-    int *fd = malloc(sizeof(int) * 2);
-    if(pipe(fd) < 0)    fprintf(stderr, "pipe failed\n");
-
-    if(pipe_map[p_n])   old_pipe = pipe_map[p_n];
-    else                old_pipe = NULL;
-
-    pipe_map[p_n] = fd;
-    return fd;
-
-}
-
-int pipe_get() {
-
-    if(!pipe_map[0])    return 0;
-    return pipe_map[0][IN];
-
-}
-
-void pipe_shift() {
-
-    int i;
-    for(i=0 ; i<(MAX_PIPE_NUM-1) ; i++) pipe_map[i] = pipe_map[i+1];
-
-}
-
-void pipe_reset() {
-
-    int i;
-    for(i=0 ; i<MAX_PIPE_NUM ; i++) pipe_map[i] = NULL;
-
 }
 
 /*
@@ -231,32 +178,6 @@ void debug_print_command(char** argv_s, int p_n) {
     fprintf(stderr, "\n");
 }
 
-void debug_fork_and_exec_last(int fd_in) {
-    int i;
-    fprintf(stderr, "\n==========\n(rest)exec: ");
-    for( i=0 ; argv[i]!=NULL ; i++ ){
-        fprintf(stderr, ".%s", argv[i]);
-    }
-    fprintf(stderr, "\n");
-
-    fprintf(stderr, "last...\n");
-    fprintf(stderr, "----\n");
-    for( i=0 ; i<10 ; i++ )
-        if(pipe_map[i]) fprintf(stderr, "pipe_map[%d] = %p, [%d][%d]\n", i, pipe_map[i], pipe_map[i][IN], pipe_map[i][OUT]);
-    fprintf(stderr, "----\n");
-
-    fprintf(stderr, "IN: %d\n", fd_in);
-    fprintf(stderr, "OUT: -\n");
-}
-
-void debug_print_pipe_map() {
-    int i;
-    fprintf(stderr, "----\n");
-    for( i=0 ; i<10 ; i++ )
-        if(pipe_map[i]) fprintf(stderr, "pipe_map[%d] = %p, [%d][%d]\n", i, pipe_map[i], pipe_map[i][IN], pipe_map[i][OUT]);
-    fprintf(stderr, "----\n");
-}
-
 /*
  * Handler (fork_and_exec)
  */
@@ -279,7 +200,7 @@ int fork_and_exec_last() {
         int fd_in = pipe_get();
         if(fd_in)   dup2(fd_in, STDIN_FILENO);
 
-        if(DEBUG)   debug_fork_and_exec_last(fd_in);
+        if(DEBUG)   debug_fork_and_exec_last(argv, fd_in);
         
         // bind out to stdout
         dup2(connfd, STDOUT_FILENO);    // duplicate socket on stdout
@@ -323,46 +244,47 @@ int fork_and_exec_pipe(char **cmd, int p_n) {
     } else if (pid ==0) {           // if child
 
         // output old_pipe content if exist
+        int *old_pipe = get_old_pipe();
         if(old_pipe!=NULL) {
 
             memset(pipe_buff, 0, sizeof(pipe_buff)); 
 
             int count;
-            if( (count = read(old_pipe[IN], pipe_buff, SIZE_PIPE_BUFF)) < 0 ) {
+            if( (count = read(old_pipe[READ], pipe_buff, SIZE_PIPE_BUFF)) < 0 ) {
                 fprintf(stderr, "read pipe connent error: %s\n", strerror(errno));
             }
 
-            if(close(old_pipe[IN]) < 0) {
+            if(close(old_pipe[READ]) < 0) {
                 fprintf(stderr, "pipe close error (old_pipe in): %s\n", strerror(errno));
                 exit(EXIT_FAILURE);
             }
 
             if(DEBUG)   debug_print_pipe_cat_content(count);
 
-            if( write(fd[OUT], pipe_buff, count) < 0 ) {
+            if( write(fd[WRITE], pipe_buff, count) < 0 ) {
                 fprintf(stderr, "write pipe connent error: %s\n", strerror(errno));
             }
 
         }
 
         // redirect STDOUT to pipe
-        if(close(fd[IN]) < 0) {
+        if(close(fd[READ]) < 0) {
             fprintf(stderr, "pipe close error (fd in): %s\n", strerror(errno));
             exit(EXIT_FAILURE);
         }
-        dup2(fd[OUT], STDOUT_FILENO);
+        dup2(fd[WRITE], STDOUT_FILENO);
         if(!DEBUG)  dup2(connfd, STDERR_FILENO);
 
         // DEBUG
         if(DEBUG)   debug_print_pipe_map();
 
-        // redirect STDIN to pipe_map[0][IN]
+        // redirect STDIN to pipe_map[0][READ]
         int fd_in = pipe_get();
         if(fd_in)   dup2(fd_in, STDIN_FILENO);
 
         if(cmd[0][0]=='/' || execvp(cmd[0], cmd)<0) {
             fprintf(stderr, "Unknown command: [%s].\n", cmd[0]);
-            close(fd[OUT]);
+            close(fd[WRITE]);
             exit(EXIT_FAILURE);
         }
 
@@ -372,7 +294,7 @@ int fork_and_exec_pipe(char **cmd, int p_n) {
 
         int return_val;    
         waitpid(pid, &return_val, 0);
-        if( close(fd[OUT]) < 0 ) {
+        if( close(fd[WRITE]) < 0 ) {
             fprintf(stderr, "pipe close error (fd out): %s\n", strerror(errno));
             exit(EXIT_FAILURE);
         }
@@ -402,7 +324,7 @@ int fork_and_exec_file(char **cmd, char *filepath) {
         dup2(fd_file, STDOUT_FILENO);
         if(!DEBUG)  dup2(connfd, STDERR_FILENO);
 
-        // redirect STDIN to pipe_map[0][IN]
+        // redirect STDIN to pipe_map[0][READ]
         int fd_in = pipe_get();
         if(fd_in)   dup2(fd_in, STDIN_FILENO);
 

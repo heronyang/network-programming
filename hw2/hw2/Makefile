@@ -1,5 +1,5 @@
 CC=gcc
-OBJ=main.o
+OBJ=main.o pipe.o
 CFLAG=-g -Wall
 
 PORT=33916

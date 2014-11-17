@@ -14,4 +14,11 @@ ls
 lssls
 ls
 lslsls
-lsls
+lslsls | number | number
+exit
+ls
+ls | number 
+ls | number | number
+ls |2 ls | number
+ls |3 ls -a |2 ls -t | cat
+exit
