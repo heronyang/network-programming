@@ -1,6 +1,8 @@
 #ifndef CONSTANT_H
 #define CONSTANT_H
 
+#define DEBUG           0
+
 #define PORT            33916
 
 #define SIZE_SEND_BUFF  1000001
