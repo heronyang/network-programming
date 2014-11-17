@@ -1,0 +1,17 @@
+ls
+cat log.txt
+ls
+cat log.txt
+exit
+ls
+cat log.txt
+ls
+ls
+cat log.txt
+exit
+aaaaaaaaaaaaaaaaaaaaaaaaàƒaaaa@†
+ls
+lssls
+ls
+lslsls
+lsls
