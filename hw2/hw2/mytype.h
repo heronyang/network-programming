@@ -4,4 +4,5 @@ typedef struct {
     char *name;
     char *ip;
     uint16_t port;
+    int socket;
 } Client;

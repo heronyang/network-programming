@@ -22,6 +22,8 @@
 #define SKIP_SHIFT      2
 
 #define SHM_KEY         5123
+#define SHM_MSG_KEY     5124
+
 #define CLIENT_MAX_NUM  30
 
 #define MESSAGE_SIZE    10000

@@ -28,7 +28,7 @@
 #include "broadcast.h"
 
 int child_count = 0;
-int g_shmid;
+int g_shmid, g_shmid_msg;
 
 /* 
  * Signal Handlers 
@@ -54,6 +54,7 @@ void catch_int(int i) {
 
     // release shared memory from system
     shmctl(g_shmid, IPC_RMID, NULL);
+    shmctl(g_shmid_msg, IPC_RMID, NULL);
     exit(0);    // end program
 
 }
@@ -77,7 +78,7 @@ void shm_init(int shmid) {
 
 }
 
-void shm_client_save(int shmid, struct sockaddr_in address) {
+void shm_client_save(int shmid, struct sockaddr_in address, int socket) {
 
     fprintf(stderr, "save client: %d\n", child_count);
 
@@ -95,6 +96,7 @@ void shm_client_save(int shmid, struct sockaddr_in address) {
     strcpy(shm[child_count].name, default_name);
     shm[child_count].ip = inet_ntoa(address.sin_addr);
     shm[child_count].port = ntohs(address.sin_port);
+    shm[child_count].socket = socket;
 
     fprintf(stderr, "valid=%d, pid=%d, name=%s, ip=%s, port=%d\n", 
             shm[child_count].valid,
@@ -117,11 +119,14 @@ int main(int argc, char *argv[]) {
     struct sockaddr_in serv_addr; 
 
     /* SIGNAL: catch control c */
-    signal(SIGINT, catch_int);
+    if (signal(SIGINT, catch_int) == SIG_ERR)
+        fprintf(stderr, "can't catch SIGINT\n");
+    if (signal(SIGUSR1, broadcast_catch) == SIG_ERR)
+        fprintf(stderr, "can't catch SIGUSR1\n");
 
     /* SHM: init */
-    int shmid;
-    key_t key = SHM_KEY;
+    int shmid, shmid_msg;
+    key_t key = SHM_KEY, msg_key = SHM_MSG_KEY;
 
     int shm_size = sizeof(Client) * CLIENT_MAX_NUM;
     if ((shmid = shmget(key, shm_size, IPC_CREAT | 0666)) < 0) {
@@ -129,6 +134,13 @@ int main(int argc, char *argv[]) {
         exit(1);
     }
     g_shmid = shmid;    // for signal handler to release the shm space
+
+    int shm_size_msg = sizeof(char) * MESSAGE_SIZE;
+    if ((shmid_msg = shmget(msg_key, shm_size_msg, IPC_CREAT | 0666)) < 0) {
+        perror("shmget");
+        exit(1);
+    }
+    g_shmid_msg = shmid_msg;
     shm_init(shmid);
 
     /* init */
@@ -175,8 +187,9 @@ int main(int argc, char *argv[]) {
 
             fprintf(stderr, "accepted connection: %d\n", connfd);
 
-            shm_client_save(shmid, serv_addr);
-            broadcast_new_comer(serv_addr);
+            shm_client_save(shmid, serv_addr, connfd);
+            broadcast_init(connfd, shmid_msg);
+            broadcast_new_comer(shmid, serv_addr);
             client_handler(connfd);
 
             /* socket - close */

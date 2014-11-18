@@ -1,9 +1,8 @@
 #ifndef BROADCAST_H
 #define BROADCAST_H
 
-void broadcast_new_comer(struct sockaddr_in serv_addr);
-
-void broadcast_sender_all(int shmid);
-void broadcast_sender_pid(int pid);
+void broadcast_new_comer(int shmid, struct sockaddr_in address);
+void broadcast_catch(int signo);
+void broadcast_init(int connfd, int sm);
 
 #endif
