@@ -1,8 +1,8 @@
 CC=gcc
-OBJ=main.o pipe.o fork_exec.o client.o
+OBJ=main.o pipe.o fork_exec.o client.o broadcast.o
 CFLAG=-g -Wall
 
-PORT=33916
+PORT=33917
 
 main: $(OBJ)
 	$(CC) -o $@ $^

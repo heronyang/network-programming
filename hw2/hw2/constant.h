@@ -3,7 +3,7 @@
 
 #define DEBUG           0
 
-#define PORT            33916
+#define PORT            33917
 
 #define SIZE_SEND_BUFF  1000001
 #define SIZE_READ_BUFF  1000001
@@ -20,5 +20,10 @@
 #define COMMAND_HANDLED -1
 
 #define SKIP_SHIFT      2
+
+#define SHM_KEY         5123
+#define CLIENT_MAX_NUM  30
+
+#define MESSAGE_SIZE    10000
 
 #endif
