@@ -59,7 +59,8 @@ void broadcast_init(int connfd, int sm) {
     shmid_msg = sm;
 }
 void broadcast_user_connect(int shmid, struct sockaddr_in address) {
-    fprintf(stderr, "broadcast new commer\n");
+
+    fprintf(stderr, "broadcast connect\n");
 
     char *msg;
     if ((msg = shmat(shmid_msg, NULL, 0)) == (char *) -1) {
@@ -67,7 +68,7 @@ void broadcast_user_connect(int shmid, struct sockaddr_in address) {
         exit(1);
     }
 
-    sprintf(msg, " *** User '(no name)' entered from %s/%d. ***", inet_ntoa(address.sin_addr), ntohs(address.sin_port));
+    sprintf(msg, " *** User '(no name)' entered from %s/%d. ***\n", inet_ntoa(address.sin_addr), ntohs(address.sin_port));
     shmdt(msg);
 
     broadcast_sender_all(shmid);
@@ -75,7 +76,8 @@ void broadcast_user_connect(int shmid, struct sockaddr_in address) {
 }
 
 void broadcast_user_disconnect(int shmid) {
-    fprintf(stderr, "broadcast new commer\n");
+
+    fprintf(stderr, "broadcast disconnect\n");
 
     char *msg;
     if ((msg = shmat(shmid_msg, NULL, 0)) == (char *) -1) {
@@ -99,7 +101,8 @@ void broadcast_user_disconnect(int shmid) {
         }
     }
 
-    sprintf(msg, " *** User '%s' left. ***", name);
+    sprintf(msg, " *** User '%s' left. ***\n", name);
+
     shmdt(msg);
     shmdt(shm);
 
