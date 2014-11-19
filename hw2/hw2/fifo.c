@@ -20,7 +20,6 @@ void fifo_init() {
     for( i=0 ; i<CLIENT_MAX_NUM ; i++ ) {
 
         sprintf(fifo_path, "%sclient_%d", FIFO_PATH_DIR, i);
-        if(DEBUG)   fprintf(stderr, "created: fifo_path = %s\n", fifo_path);
 
         if(mknod(fifo_path, S_IFIFO | 0666, 0) < 0) {
             perror("mknod");
@@ -28,6 +27,8 @@ void fifo_init() {
         if((fifo_fd[i] = open(fifo_path, O_NONBLOCK | O_RDONLY) ) < 0) {
             perror("open(RO)");
         }
+
+        if(DEBUG)   fprintf(stderr, "open: fifo_path = %s\n", fifo_path);
 
     }
 }

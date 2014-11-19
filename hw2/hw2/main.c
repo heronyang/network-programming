@@ -192,7 +192,6 @@ void catch_int(int i) {
 
     // release shared memory from system
     shm_delete();
-    fifo_close();
     exit(0);    // end program
 
 }
@@ -214,9 +213,6 @@ int main(int argc, char *argv[]) {
 
     /* SHM: init */
     shm_init();
-
-    /* FIFO: init */
-    fifo_init();
 
     /* init */
     listenfd = socket(AF_INET, SOCK_STREAM, 0);
@@ -265,6 +261,7 @@ int main(int argc, char *argv[]) {
             shm_client_new(g_shmid, serv_addr, connfd);
             broadcast_init(connfd);
             broadcast_user_connect(serv_addr);
+            fifo_init();
 
             // client: handle
             client_handler(connfd);
@@ -276,6 +273,7 @@ int main(int argc, char *argv[]) {
 
             broadcast_user_disconnect();
             shm_client_delete(g_shmid);
+            fifo_close();
             fprintf(stderr, "closed connection: %d\n", connfd);
 
             exit(EXIT_SUCCESS);
