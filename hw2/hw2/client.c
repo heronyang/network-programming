@@ -18,6 +18,7 @@
 #include "mytype.h"
 #include "variable.h"
 #include "client_name.h"
+#include "broadcast.h"
 
 /*
  * Globals
@@ -153,6 +154,7 @@ void cmd_name(int connfd, char *name) {
     }
     shmdt(shm);
 
+    broadcast_cmd_name();
 }
 
 int prompt(int connfd) {

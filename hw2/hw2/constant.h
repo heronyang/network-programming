@@ -31,4 +31,6 @@
 #define NAME_SIZE       21
 #define TMP_STRING_SIZE 1200
 
+#define IP_STRING_SIZE  20
+
 #endif

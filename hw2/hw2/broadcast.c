@@ -72,7 +72,7 @@ void broadcast_user_connect(struct sockaddr_in address) {
     sprintf(msg, " *** User '(no name)' entered from %s/%d. ***\n", inet_ntoa(address.sin_addr), ntohs(address.sin_port));
     shmdt(msg);
 
-    broadcast_sender_all(g_shmid);
+    broadcast_sender_all();
 
 }
 
@@ -107,6 +107,41 @@ void broadcast_user_disconnect() {
     shmdt(msg);
     shmdt(shm);
 
-    broadcast_sender_all(g_shmid);
+    broadcast_sender_all();
+
+}
+
+void broadcast_cmd_name() {
+
+    char *msg;
+    if ((msg = shmat(g_shmid_msg, NULL, 0)) == (char *) -1) {
+        perror("shmat");
+        exit(1);
+    }
+
+    Client *shm;
+    if ((shm = shmat(g_shmid, NULL, 0)) == (Client *) -1) {
+        perror("shmat");
+        exit(1);
+    }
+
+    int pid = getpid(), i;
+    int port = 0;
+    char ip[IP_STRING_SIZE], name[NAME_SIZE];
+    for( i=0 ; i<CLIENT_MAX_NUM ; i++ ) {
+        if(shm[i].valid && shm[i].pid == pid) {
+            strcpy(ip, shm[i].ip);
+            port = shm[i].port;
+            strcpy(name, getname(i));
+        }
+    }
+
+
+    sprintf(msg, "*** User from %s/%d is named '%s'. ***\n", ip, port ,name);
+
+    shmdt(shm);
+    shmdt(msg);
+
+    broadcast_sender_all();
 
 }
