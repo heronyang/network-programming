@@ -8,19 +8,21 @@
 
 #include "constant.h"
 #include "mytype.h"
+#include "variable.h"
+#include "client_name.h"
 
 int client_socket;
-int shmid_msg;
+int g_shmid, g_shmid_msg;
 
 /* [Private] Send */
 void broadcast_sender_pid(int pid) {
     kill(pid, SIGUSR1);
 }
 
-void broadcast_sender_all(int shmid) {
+void broadcast_sender_all() {
     int i;
     Client *shm;
-    if ((shm = shmat(shmid, NULL, 0)) == (Client *) -1) {
+    if ((shm = shmat(g_shmid, NULL, 0)) == (Client *) -1) {
         perror("shmat");
         exit(1);
     }
@@ -36,7 +38,7 @@ void broadcast_sender_all(int shmid) {
 void broadcast_catch(int signo) {
 
     char *msg;
-    if ((msg = shmat(shmid_msg, NULL, 0)) == (char *) -1) {
+    if ((msg = shmat(g_shmid_msg, NULL, 0)) == (char *) -1) {
         perror("shmat");
         exit(1);
     }
@@ -52,19 +54,17 @@ void broadcast_catch(int signo) {
 }
 
 /* [Public] Events */
-void broadcast_init(int connfd, int sm) {
+void broadcast_init(int connfd) {
     client_socket = connfd;
     fprintf(stderr, "init socket:%d\n", client_socket);
-
-    shmid_msg = sm;
 }
 
-void broadcast_user_connect(int shmid, struct sockaddr_in address) {
+void broadcast_user_connect(struct sockaddr_in address) {
 
     fprintf(stderr, "broadcast connect\n");
 
     char *msg;
-    if ((msg = shmat(shmid_msg, NULL, 0)) == (char *) -1) {
+    if ((msg = shmat(g_shmid_msg, NULL, 0)) == (char *) -1) {
         perror("shmat");
         exit(1);
     }
@@ -72,22 +72,22 @@ void broadcast_user_connect(int shmid, struct sockaddr_in address) {
     sprintf(msg, " *** User '(no name)' entered from %s/%d. ***\n", inet_ntoa(address.sin_addr), ntohs(address.sin_port));
     shmdt(msg);
 
-    broadcast_sender_all(shmid);
+    broadcast_sender_all(g_shmid);
 
 }
 
-void broadcast_user_disconnect(int shmid) {
+void broadcast_user_disconnect() {
 
     fprintf(stderr, "broadcast disconnect\n");
 
     char *msg;
-    if ((msg = shmat(shmid_msg, NULL, 0)) == (char *) -1) {
+    if ((msg = shmat(g_shmid_msg, NULL, 0)) == (char *) -1) {
         perror("shmat");
         exit(1);
     }
 
     Client *shm;
-    if ((shm = shmat(shmid, NULL, 0)) == (Client *) -1) {
+    if ((shm = shmat(g_shmid, NULL, 0)) == (Client *) -1) {
         perror("shmat");
         exit(1);
     }
@@ -98,7 +98,7 @@ void broadcast_user_disconnect(int shmid) {
     strcpy(name, t_name);
     for( i=0 ; i<CLIENT_MAX_NUM ; i++ ) {
         if(shm[i].valid && shm[i].pid == pid) {
-            strcpy(name, shm[i].name);
+            strcpy(name, getname(i));
         }
     }
 
@@ -107,6 +107,6 @@ void broadcast_user_disconnect(int shmid) {
     shmdt(msg);
     shmdt(shm);
 
-    broadcast_sender_all(shmid);
+    broadcast_sender_all(g_shmid);
 
 }

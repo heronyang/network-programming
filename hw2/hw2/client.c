@@ -16,6 +16,8 @@
 #include "fork_exec.h"
 #include "client.h"
 #include "mytype.h"
+#include "variable.h"
+#include "client_name.h"
 
 /*
  * Globals
@@ -25,6 +27,9 @@ char read_buff[SIZE_READ_BUFF];
 
 char **argv;
 int argc = 0;
+
+/* External Globals */
+int g_shmid, g_shmid_msg, g_shmid_name;
 
 /*
  * Shell
@@ -96,7 +101,7 @@ int read_helper(int connfd, char *buf) {
     return count;
 }
 
-void cmd_who(int connfd, int shmid) {
+void cmd_who(int connfd) {
 
     char content[SIZE_SEND_BUFF] = "<ID>\t<nickname>\t<IP/port>\t<indicate me>\n";
     char t_s[TMP_STRING_SIZE];
@@ -104,7 +109,7 @@ void cmd_who(int connfd, int shmid) {
     int pid = getpid(), i;
 
     Client *shm;
-    if ((shm = shmat(shmid, NULL, 0)) == (Client *) -1) {
+    if ((shm = shmat(g_shmid, NULL, 0)) == (Client *) -1) {
         perror("shmat");
         exit(1);
     }
@@ -112,7 +117,7 @@ void cmd_who(int connfd, int shmid) {
 
         if(!shm[i].valid)   continue;
 
-        sprintf(t_s, "%d\t%s\t%s/%d", i, shm[i].name, shm[i].ip, shm[i].port);
+        sprintf(t_s, "%d\t%s\t%s/%d", i, getname(i), shm[i].ip, shm[i].port);
 
         if(shm[i].pid == pid) {
             strcat(t_s, "\t<- me\n");
@@ -130,10 +135,10 @@ void cmd_who(int connfd, int shmid) {
 
 }
 
-void cmd_name(int connfd, int shmid, char *name) {
+void cmd_name(int connfd, char *name) {
 
     Client *shm;
-    if ((shm = shmat(shmid, NULL, 0)) == (Client *) -1) {
+    if ((shm = shmat(g_shmid, NULL, 0)) == (Client *) -1) {
         perror("shmat");
         exit(1);
     }
@@ -142,7 +147,7 @@ void cmd_name(int connfd, int shmid, char *name) {
     for( i=0 ; i<CLIENT_MAX_NUM ; i++ ) {
 
         if(shm[i].valid && shm[i].pid == pid) {
-            strcpy(shm[i].name, name);
+            setname(i, name);
         }
 
     }
@@ -150,7 +155,7 @@ void cmd_name(int connfd, int shmid, char *name) {
 
 }
 
-int prompt(int connfd, int shmid) {
+int prompt(int connfd) {
 
     int r = 0;
 
@@ -174,11 +179,11 @@ int prompt(int connfd, int shmid) {
         return COMMAND_HANDLED;
     }
     if(strcmp(argv[0], "who") == 0) {
-        cmd_who(connfd, shmid);
+        cmd_who(connfd);
         return COMMAND_HANDLED;
     }
     if(strcmp(argv[0], "name") == 0) {
-        cmd_name(connfd, shmid, argv[1]);
+        cmd_name(connfd, argv[1]);
         return COMMAND_HANDLED;
     }
 
@@ -304,7 +309,7 @@ void command_handler(int connfd) {
 }
 
 // handle one socket connection
-void client_handler(int connfd, int shmid) {
+void client_handler(int connfd) {
 
     init_env();
 
@@ -313,7 +318,7 @@ void client_handler(int connfd, int shmid) {
 
     // handle (rest)
     while(1) {
-        int r = prompt(connfd, shmid);
+        int r = prompt(connfd);
         if(r == COMMAND_HANDLED) continue;
         if(!r)  break;
         command_handler(connfd);

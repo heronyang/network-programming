@@ -1,5 +1,5 @@
 CC=gcc
-OBJ=main.o pipe.o fork_exec.o client.o broadcast.o
+OBJ=main.o pipe.o fork_exec.o client.o broadcast.o client_name.o
 CFLAG=-g -Wall
 
 PORT=33917
