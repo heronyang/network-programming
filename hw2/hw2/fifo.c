@@ -44,8 +44,22 @@ void fifo_close() {
             perror("close");
         }
         sprintf(fifo_path, "%sclient_%d", FIFO_PATH_DIR, i);
-        unlink(fifo_path);
 
     }
 
+}
+
+void fifo_finalize() {
+
+    int i;
+    char fifo_path[PATH_LENGTH];
+
+    for( i=0 ; i<CLIENT_MAX_NUM ; i++ ) {
+
+        sprintf(fifo_path, "%sclient_%d", FIFO_PATH_DIR, i);
+        if(unlink(fifo_path) < 0) {
+            perror("unlink");
+        }
+
+    }
 }

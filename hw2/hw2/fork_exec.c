@@ -238,7 +238,7 @@ int fork_and_exec_pipe_out(int connfd, char **cmd, int target_id) {
 
     } else if (pid ==0) {           // if child
 
-        sprintf(fifo_path, "%sclient_%d", FIFO_PATH_DIR, target_id);
+        sprintf(fifo_path, "../%sclient_%d", FIFO_PATH_DIR, target_id);
         fprintf(stderr, "fifo_path:%s\n", fifo_path);
         if((fd = open(fifo_path, O_NONBLOCK | O_WRONLY) ) < 0) {
             perror("open");

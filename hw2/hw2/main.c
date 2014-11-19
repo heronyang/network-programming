@@ -192,6 +192,7 @@ void catch_int(int i) {
 
     // release shared memory from system
     shm_delete();
+    fifo_finalize();
     exit(0);    // end program
 
 }
