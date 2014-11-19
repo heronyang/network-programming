@@ -120,8 +120,6 @@ void cmd_who(int connfd, int shmid) {
             strcat(t_s, "\n");
         }
 
-        fprintf(stderr, "valid found: %d, :%s\n", i, t_s);
-
         strcat(content, t_s);
 
     }
@@ -129,6 +127,26 @@ void cmd_who(int connfd, int shmid) {
 
     snprintf(send_buff, sizeof(send_buff), content);
     write(connfd, send_buff, strlen(send_buff)); 
+
+}
+
+void cmd_name(int connfd, int shmid, char *name) {
+
+    Client *shm;
+    if ((shm = shmat(shmid, NULL, 0)) == (Client *) -1) {
+        perror("shmat");
+        exit(1);
+    }
+
+    int pid = getpid(), i;
+    for( i=0 ; i<CLIENT_MAX_NUM ; i++ ) {
+
+        if(shm[i].valid && shm[i].pid == pid) {
+            strcpy(shm[i].name, name);
+        }
+
+    }
+    shmdt(shm);
 
 }
 
@@ -157,6 +175,10 @@ int prompt(int connfd, int shmid) {
     }
     if(strcmp(argv[0], "who") == 0) {
         cmd_who(connfd, shmid);
+        return COMMAND_HANDLED;
+    }
+    if(strcmp(argv[0], "name") == 0) {
+        cmd_name(connfd, shmid, argv[1]);
         return COMMAND_HANDLED;
     }
 

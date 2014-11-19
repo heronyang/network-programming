@@ -27,7 +27,7 @@
 #define CLIENT_MAX_NUM  30
 
 #define MESSAGE_SIZE    10000
-#define NAME_SIZE       1000
+#define NAME_SIZE       21
 #define TMP_STRING_SIZE 1200
 
 #endif

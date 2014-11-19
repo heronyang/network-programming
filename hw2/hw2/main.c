@@ -90,10 +90,10 @@ void shm_client_new(int shmid, struct sockaddr_in address, int socket) {
     }
 
     //
-    char *default_name = "(no name)";
+    char default_name[NAME_SIZE] = "(no name)";
     shm[client_id].valid = TRUE;
     shm[client_id].pid = getpid();
-    shm[client_id].name = malloc(sizeof(default_name)+1);
+    shm[client_id].name = malloc(sizeof(char) * NAME_SIZE);
     strcpy(shm[client_id].name, default_name);
     shm[client_id].ip = inet_ntoa(address.sin_addr);
     shm[client_id].port = ntohs(address.sin_port);
