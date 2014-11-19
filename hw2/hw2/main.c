@@ -27,6 +27,7 @@
 #include "mytype.h"
 #include "broadcast.h"
 #include "client_name.h"
+#include "fifo.h"
 
 /* Globals */
 int child_count = 0;
@@ -191,6 +192,7 @@ void catch_int(int i) {
 
     // release shared memory from system
     shm_delete();
+    fifo_close();
     exit(0);    // end program
 
 }
@@ -212,6 +214,9 @@ int main(int argc, char *argv[]) {
 
     /* SHM: init */
     shm_init();
+
+    /* FIFO: init */
+    fifo_init();
 
     /* init */
     listenfd = socket(AF_INET, SOCK_STREAM, 0);
@@ -255,21 +260,23 @@ int main(int argc, char *argv[]) {
 
         } else if (pid ==0) {           // if child
 
+            // client: init
+            fprintf(stderr, "accepted connection: %d\n", connfd);
             shm_client_new(g_shmid, serv_addr, connfd);
             broadcast_init(connfd);
-
-            fprintf(stderr, "accepted connection: %d\n", connfd);
             broadcast_user_connect(serv_addr);
 
+            // client: handle
             client_handler(connfd);
 
-            /* socket - close */
+            // client: close
             if(close(connfd) < 0) {
                 perror("close");
             }
-            fprintf(stderr, "closed connection: %d\n", connfd);
+
             broadcast_user_disconnect();
             shm_client_delete(g_shmid);
+            fprintf(stderr, "closed connection: %d\n", connfd);
 
             exit(EXIT_SUCCESS);
 

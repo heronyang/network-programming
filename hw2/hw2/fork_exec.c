@@ -13,8 +13,10 @@
 #include "constant.h"
 #include "pipe.h"
 #include "fork_exec.h"
+#include "variable.h"
 
 char pipe_buff[SIZE_PIPE_BUFF];
+int fifo_fd[CLIENT_MAX_NUM];
 
 /*
  * Handler (fork_and_exec)
@@ -182,6 +184,90 @@ int fork_and_exec_file(int connfd, char **cmd, char *filepath) {
 
     return EXIT_SUCCESS;
 
+}
+
+int fork_and_exec_pipe_in(int connfd, char **cmd, int source_id) {
+
+    pid_t pid;
+    pid = fork();
+
+    if(pid<0) {                     // if error
+
+        fprintf(stderr, "Fork failed\n");
+        exit(EXIT_FAILURE);
+
+    } else if (pid ==0) {           // if child
+
+        dup2(connfd, STDOUT_FILENO);
+        if(!DEBUG)  dup2(connfd, STDERR_FILENO);
+
+        // redirect STDIN to pipe_map[0][READ]
+        dup2(fifo_fd[source_id], STDIN_FILENO);
+
+        if( cmd[0][0]=='/' || execvp(cmd[0], cmd)<0 ) {
+            fprintf(stderr, "Unknown command: [%s].\n", cmd[0]);
+            exit(EXIT_FAILURE);
+        }
+
+        exit(EXIT_SUCCESS);
+
+    } else {
+
+        int return_val;    
+        waitpid(pid, &return_val, 0);
+        if( WEXITSTATUS(return_val) == EXIT_FAILURE )  return EXIT_FAILURE;
+
+    }
+
+    return EXIT_SUCCESS;
+
+}
+
+int fork_and_exec_pipe_out(int connfd, char **cmd, int target_id) {
+
+    int fd;
+    char fifo_path[PATH_LENGTH];
+
+    pid_t pid;
+    pid = fork();
+
+    if(pid<0) {                     // if error
+
+        fprintf(stderr, "Fork failed\n");
+        exit(EXIT_FAILURE);
+
+    } else if (pid ==0) {           // if child
+
+        sprintf(fifo_path, "%sclient_%d", FIFO_PATH_DIR, target_id);
+        fprintf(stderr, "fifo_path:%s\n", fifo_path);
+        if((fd = open(fifo_path, O_NONBLOCK | O_WRONLY) ) < 0) {
+            perror("open");
+        }
+
+        dup2(fd, STDOUT_FILENO);
+        if(!DEBUG)  dup2(fd, STDERR_FILENO);
+
+        // redirect STDIN to pipe_map[0][READ]
+        int fd_in = pipe_get();
+        if(fd_in)   dup2(fd_in, STDIN_FILENO);
+
+        if( cmd[0][0]=='/' || execvp(cmd[0], cmd)<0 ) {
+            fprintf(stderr, "Unknown command: [%s].\n", cmd[0]);
+            close(fd);
+            exit(EXIT_FAILURE);
+        }
+
+        exit(EXIT_SUCCESS);
+
+    } else {
+
+        int return_val;    
+        waitpid(pid, &return_val, 0);
+        if( WEXITSTATUS(return_val) == EXIT_FAILURE )  return EXIT_FAILURE;
+
+    }
+
+    return EXIT_SUCCESS;
 }
 
 /*

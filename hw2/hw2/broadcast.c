@@ -92,6 +92,19 @@ int get_pid_from_client_id(int client_id) {
 
 }
 
+int check_client_exist(int client_id) {
+
+    Client *shm;
+    if ((shm = shmat(g_shmid, NULL, 0)) == (Client *) -1) {
+        perror("shmat");
+        exit(1);
+    }
+
+    if(shm[client_id].valid)    return TRUE;
+    return FALSE;
+
+}
+
 /* [Public] Recieve (Signal Callback) */
 void broadcast_catch(int signo) {
 

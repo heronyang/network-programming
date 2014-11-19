@@ -303,6 +303,7 @@ void command_handler(int connfd) {
         is_pipe = FALSE;
 
         for( i=0 ; i<argc ; i++ ) {
+
             if(argv[i] && argv[i][0] == '|') {
 
                 int p_n = 1;
@@ -326,7 +327,8 @@ void command_handler(int connfd) {
                 break;
 
             }
-            if(argv[i] && argv[i][0] == '>') {
+
+            if(argv[i] && strlen(argv[i])==1 && argv[i][0] == '>') {
 
                 char *filepath = argv[i+1];
                 char **argv_s = extract_command(i);
@@ -334,6 +336,44 @@ void command_handler(int connfd) {
                 if( fork_and_exec_file(connfd, argv_s, filepath) == EXIT_FAILURE ) {
                     return;
                 }
+
+                return;
+
+            }
+
+            if(argv[i] && strlen(argv[i])!=1 && argv[i][0] == '>') {
+
+                char **argv_s = extract_command(i);
+                int target_id;
+                sscanf(argv[i], ">%d", &target_id);
+                if(!check_client_exist(target_id)) {
+                    sprintf(send_buff, "*** Error: user #%d does not exist yet. ***\n", target_id);
+                    write(connfd, send_buff, strlen(send_buff)); 
+                    return;
+                }
+                if( fork_and_exec_pipe_out(connfd, argv_s, target_id) == EXIT_FAILURE ) {
+                    return;
+                }
+
+                return;
+
+            }
+
+            if(argv[i] && strlen(argv[i])!=1 && argv[i][0] == '<') {
+
+                char **argv_s = extract_command(i);
+                int source_id;
+                sscanf(argv[i], "<%d", &source_id);
+                if(!check_client_exist(source_id)) {
+                    sprintf(send_buff, "*** Error: user #%d does not exist yet. ***\n", source_id);
+                    write(connfd, send_buff, strlen(send_buff)); 
+                    return;
+                }
+
+                if( fork_and_exec_pipe_in(connfd, argv_s, source_id) == EXIT_FAILURE ) {
+                    return;
+                }
+
                 return;
 
             }

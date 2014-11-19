@@ -11,4 +11,7 @@ void broadcast_cmd_tell(int target_id, char *buff);
 void broadcast_catch(int signo);
 void broadcast_init(int connfd);
 
+/* tools */
+int check_client_exist(int client_id);
+
 #endif

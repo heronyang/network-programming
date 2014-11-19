@@ -1,7 +1,7 @@
 #ifndef CONSTANT_H
 #define CONSTANT_H
 
-#define DEBUG           0
+#define DEBUG           1
 
 #define PORT            33917
 
@@ -32,5 +32,8 @@
 #define TMP_STRING_SIZE 1200
 
 #define IP_STRING_SIZE  20
+
+#define FIFO_PATH_DIR   "tmp/"
+#define PATH_LENGTH     1000
 
 #endif
