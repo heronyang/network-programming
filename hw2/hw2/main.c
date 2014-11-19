@@ -80,7 +80,8 @@ void shm_init(int shmid) {
 
 void shm_client_new(int shmid, struct sockaddr_in address, int socket) {
 
-    fprintf(stderr, "save client: %d\n", child_count);
+    int client_id = child_count - 1;
+    fprintf(stderr, "client #: %d\n", client_id);
 
     Client *shm;
     if ((shm = shmat(shmid, NULL, 0)) == (Client *) -1) {
@@ -90,20 +91,20 @@ void shm_client_new(int shmid, struct sockaddr_in address, int socket) {
 
     //
     char *default_name = "(no name)";
-    shm[child_count].valid = TRUE;
-    shm[child_count].pid = getpid();
-    shm[child_count].name = malloc(sizeof(default_name)+1);
-    strcpy(shm[child_count].name, default_name);
-    shm[child_count].ip = inet_ntoa(address.sin_addr);
-    shm[child_count].port = ntohs(address.sin_port);
-    shm[child_count].socket = socket;
+    shm[client_id].valid = TRUE;
+    shm[client_id].pid = getpid();
+    shm[client_id].name = malloc(sizeof(default_name)+1);
+    strcpy(shm[client_id].name, default_name);
+    shm[client_id].ip = inet_ntoa(address.sin_addr);
+    shm[client_id].port = ntohs(address.sin_port);
+    shm[client_id].socket = socket;
 
     fprintf(stderr, "valid=%d, pid=%d, name=%s, ip=%s, port=%d\n", 
-            shm[child_count].valid,
-            shm[child_count].pid,
-            shm[child_count].name,
-            shm[child_count].ip,
-            shm[child_count].port);
+            shm[client_id].valid,
+            shm[client_id].pid,
+            shm[client_id].name,
+            shm[client_id].ip,
+            shm[client_id].port);
 
     shmdt(shm);
 
@@ -212,7 +213,7 @@ int main(int argc, char *argv[]) {
             fprintf(stderr, "accepted connection: %d\n", connfd);
             broadcast_user_connect(shmid, serv_addr);
 
-            client_handler(connfd);
+            client_handler(connfd, shmid);
 
             /* socket - close */
             if(close(connfd) < 0) {

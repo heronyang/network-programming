@@ -8,12 +8,14 @@
 #include <string.h>
 #include <sys/types.h>
 #include <sys/wait.h>
+#include <sys/shm.h>
 #include <fcntl.h>
 
 #include "constant.h"
 #include "pipe.h"
 #include "fork_exec.h"
 #include "client.h"
+#include "mytype.h"
 
 /*
  * Globals
@@ -94,7 +96,43 @@ int read_helper(int connfd, char *buf) {
     return count;
 }
 
-int prompt(int connfd) {
+void cmd_who(int connfd, int shmid) {
+
+    char content[SIZE_SEND_BUFF] = "<ID>\t<nickname>\t<IP/port>\t<indicate me>\n";
+    char t_s[TMP_STRING_SIZE];
+
+    int pid = getpid(), i;
+
+    Client *shm;
+    if ((shm = shmat(shmid, NULL, 0)) == (Client *) -1) {
+        perror("shmat");
+        exit(1);
+    }
+    for( i=0 ; i<CLIENT_MAX_NUM ; i++ ) {
+
+        if(!shm[i].valid)   continue;
+
+        sprintf(t_s, "%d\t%s\t%s/%d", i, shm[i].name, shm[i].ip, shm[i].port);
+
+        if(shm[i].pid == pid) {
+            strcat(t_s, "\t<- me\n");
+        } else {
+            strcat(t_s, "\n");
+        }
+
+        fprintf(stderr, "valid found: %d, :%s\n", i, t_s);
+
+        strcat(content, t_s);
+
+    }
+    shmdt(shm);
+
+    snprintf(send_buff, sizeof(send_buff), content);
+    write(connfd, send_buff, strlen(send_buff)); 
+
+}
+
+int prompt(int connfd, int shmid) {
 
     int r = 0;
 
@@ -115,6 +153,10 @@ int prompt(int connfd) {
     }
     if(strcmp(argv[0], "printenv") == 0) {
         printenv_helper(connfd);
+        return COMMAND_HANDLED;
+    }
+    if(strcmp(argv[0], "who") == 0) {
+        cmd_who(connfd, shmid);
         return COMMAND_HANDLED;
     }
 
@@ -240,7 +282,7 @@ void command_handler(int connfd) {
 }
 
 // handle one socket connection
-void client_handler(int connfd) {
+void client_handler(int connfd, int shmid) {
 
     init_env();
 
@@ -249,7 +291,7 @@ void client_handler(int connfd) {
 
     // handle (rest)
     while(1) {
-        int r = prompt(connfd);
+        int r = prompt(connfd, shmid);
         if(r == COMMAND_HANDLED) continue;
         if(!r)  break;
         command_handler(connfd);

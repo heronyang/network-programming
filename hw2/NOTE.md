@@ -68,11 +68,11 @@
 - client id is assigned when login, retrieved when logout (1~30)
 
 ## Events 
-### Connect
+### Connect (ok)
 ```
    % *** User '(no name)' entered from <IP>/<PORT>. ***
 ```
-### Disconnect
+### Disconnect (ok)
 ```
    % *** User '<client name>' left. ***
 ```

@@ -58,6 +58,7 @@ void broadcast_init(int connfd, int sm) {
 
     shmid_msg = sm;
 }
+
 void broadcast_user_connect(int shmid, struct sockaddr_in address) {
 
     fprintf(stderr, "broadcast connect\n");
