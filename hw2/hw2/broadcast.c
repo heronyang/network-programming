@@ -34,6 +34,47 @@ void broadcast_sender_all() {
     shmdt(shm);
 }
 
+/* Tool Function */
+char *get_my_name() {
+
+    Client *shm;
+    if ((shm = shmat(g_shmid, NULL, 0)) == (Client *) -1) {
+        perror("shmat");
+        exit(1);
+    }
+
+    int i, pid = getpid();
+    char *name = malloc(sizeof(char) * NAME_SIZE);
+    char *t_name = "(no name)";
+    strcpy(name, t_name);
+    for( i=0 ; i<CLIENT_MAX_NUM ; i++ ) {
+        if(shm[i].valid && shm[i].pid == pid) {
+            strcpy(name, getname(i));
+        }
+    }
+
+    shmdt(shm);
+
+    return name;
+}
+
+char *get_following(char *buff) {
+
+    int i, start = FALSE, len = strlen(buff);
+    char *res = malloc(sizeof(char) * SIZE_READ_BUFF);
+    for( i=0 ; i<len ; i++ ) {
+        if( buff[i]!=' ' )  start = TRUE;
+        if( start && buff[i]==' ' ) break;
+    }
+
+    if(buff[len-1] == '\n') buff[len-1] = '\0';
+
+    memcpy(res, &buff[i+1], strlen(buff) - i);
+
+    return res;
+
+}
+
 /* [Public] Recieve (Signal Callback) */
 void broadcast_catch(int signo) {
 
@@ -86,26 +127,9 @@ void broadcast_user_disconnect() {
         exit(1);
     }
 
-    Client *shm;
-    if ((shm = shmat(g_shmid, NULL, 0)) == (Client *) -1) {
-        perror("shmat");
-        exit(1);
-    }
-
-    int i, pid = getpid();
-    char name[NAME_SIZE];
-    char *t_name = "(no name)";
-    strcpy(name, t_name);
-    for( i=0 ; i<CLIENT_MAX_NUM ; i++ ) {
-        if(shm[i].valid && shm[i].pid == pid) {
-            strcpy(name, getname(i));
-        }
-    }
-
-    sprintf(msg, " *** User '%s' left. ***\n", name);
+    sprintf(msg, "*** User '%s' left. ***\n", get_my_name());
 
     shmdt(msg);
-    shmdt(shm);
 
     broadcast_sender_all();
 
@@ -140,6 +164,22 @@ void broadcast_cmd_name() {
     sprintf(msg, "*** User from %s/%d is named '%s'. ***\n", ip, port ,name);
 
     shmdt(shm);
+    shmdt(msg);
+
+    broadcast_sender_all();
+
+}
+
+void broadcast_cmd_yell(char *buff) {
+
+    char *msg;
+    if ((msg = shmat(g_shmid_msg, NULL, 0)) == (char *) -1) {
+        perror("shmat");
+        exit(1);
+    }
+    
+    sprintf(msg, "*** %s yelled ***: %s\n", get_my_name(), get_following(buff));
+
     shmdt(msg);
 
     broadcast_sender_all();

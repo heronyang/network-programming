@@ -93,9 +93,29 @@ void shm_delete() {
     shmctl(g_shmid_name, IPC_RMID, NULL);
 }
 
+int get_next_client_id(int shmid) {
+
+    Client *shm;
+    if ((shm = shmat(shmid, NULL, 0)) == (Client *) -1) {
+        perror("shmat");
+        exit(1);
+    }
+
+    int i;
+    for( i=0 ; i<CLIENT_MAX_NUM ; i++ ) {
+        if(!shm[i].valid) {
+            return i;
+        }
+    }
+
+    shmdt(shm);
+
+    return 0;
+}
+
 void shm_client_new(int shmid, struct sockaddr_in address, int socket) {
 
-    int client_id = child_count - 1;
+    int client_id = get_next_client_id(shmid);
     fprintf(stderr, "client #: %d\n", client_id);
 
     Client *shm;

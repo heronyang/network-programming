@@ -136,7 +136,7 @@ void cmd_who(int connfd) {
 
 }
 
-void cmd_name(int connfd, char *name) {
+void cmd_name(char *name) {
 
     Client *shm;
     if ((shm = shmat(g_shmid, NULL, 0)) == (Client *) -1) {
@@ -157,6 +157,10 @@ void cmd_name(int connfd, char *name) {
     broadcast_cmd_name();
 }
 
+void cmd_yell(char *buff) {
+    broadcast_cmd_yell(buff);
+}
+
 int prompt(int connfd) {
 
     int r = 0;
@@ -169,6 +173,9 @@ int prompt(int connfd) {
     // r = read(connfd, read_buff, SIZE_READ_BUFF);
     r = read_helper(connfd, read_buff);
     if(r == 1)  return COMMAND_HANDLED;
+
+    char original_read_buff[SIZE_READ_BUFF];
+    strcpy(original_read_buff, read_buff);
 
     argv = command_decode(read_buff);
     if(strcmp(argv[0], "exit") == 0)  return 0;   // same as end
@@ -185,7 +192,11 @@ int prompt(int connfd) {
         return COMMAND_HANDLED;
     }
     if(strcmp(argv[0], "name") == 0) {
-        cmd_name(connfd, argv[1]);
+        cmd_name(argv[1]);
+        return COMMAND_HANDLED;
+    }
+    if(strcmp(argv[0], "yell") == 0) {
+        cmd_yell(original_read_buff);
         return COMMAND_HANDLED;
     }
 
