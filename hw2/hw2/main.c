@@ -78,7 +78,7 @@ void shm_init(int shmid) {
 
 }
 
-void shm_client_save(int shmid, struct sockaddr_in address, int socket) {
+void shm_client_new(int shmid, struct sockaddr_in address, int socket) {
 
     fprintf(stderr, "save client: %d\n", child_count);
 
@@ -104,6 +104,27 @@ void shm_client_save(int shmid, struct sockaddr_in address, int socket) {
             shm[child_count].name,
             shm[child_count].ip,
             shm[child_count].port);
+
+    shmdt(shm);
+
+}
+
+void shm_client_delete(int shmid) {
+
+    int pid = getpid();
+
+    Client *shm;
+    if ((shm = shmat(shmid, NULL, 0)) == (Client *) -1) {
+        perror("shmat");
+        exit(1);
+    }
+
+    int i;
+    for( i=0 ; i<CLIENT_MAX_NUM ; i++ ) {
+        if(shm[i].valid && shm[i].pid == pid) {
+            shm[i].valid = FALSE;
+        }
+    }
 
     shmdt(shm);
 
@@ -185,11 +206,12 @@ int main(int argc, char *argv[]) {
 
         } else if (pid ==0) {           // if child
 
-            fprintf(stderr, "accepted connection: %d\n", connfd);
-
-            shm_client_save(shmid, serv_addr, connfd);
+            shm_client_new(shmid, serv_addr, connfd);
             broadcast_init(connfd, shmid_msg);
-            broadcast_new_comer(shmid, serv_addr);
+
+            fprintf(stderr, "accepted connection: %d\n", connfd);
+            broadcast_user_connect(shmid, serv_addr);
+
             client_handler(connfd);
 
             /* socket - close */
@@ -197,6 +219,8 @@ int main(int argc, char *argv[]) {
                 perror("close");
             }
             fprintf(stderr, "closed connection: %d\n", connfd);
+            broadcast_user_disconnect(shmid);
+            shm_client_delete(shmid);
 
             exit(EXIT_SUCCESS);
 
