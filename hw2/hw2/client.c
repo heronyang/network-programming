@@ -161,6 +161,30 @@ void cmd_yell(char *buff) {
     broadcast_cmd_yell(buff);
 }
 
+void cmd_tell(int connfd, int target_id, char *buff) {
+
+    // check if target_id exist
+    Client *shm;
+    if ((shm = shmat(g_shmid, NULL, 0)) == (Client *) -1) {
+        perror("shmat");
+        exit(1);
+    }
+    int valid = shm[target_id].valid;
+    shmdt(shm);
+
+    if(!valid) {
+
+        sprintf(send_buff, "*** Error: user #%d does not exist yet. ***\n", target_id);
+        write(connfd, send_buff, strlen(send_buff)); 
+
+    } else {
+
+        broadcast_cmd_tell(target_id, buff);
+
+    }
+
+}
+
 int prompt(int connfd) {
 
     int r = 0;
@@ -197,6 +221,10 @@ int prompt(int connfd) {
     }
     if(strcmp(argv[0], "yell") == 0) {
         cmd_yell(original_read_buff);
+        return COMMAND_HANDLED;
+    }
+    if(strcmp(argv[0], "tell") == 0) {
+        cmd_tell(connfd, atoi(argv[1]), original_read_buff);
         return COMMAND_HANDLED;
     }
 

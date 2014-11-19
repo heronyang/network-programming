@@ -75,6 +75,23 @@ char *get_following(char *buff) {
 
 }
 
+int get_pid_from_client_id(int client_id) {
+
+    Client *shm;
+    if ((shm = shmat(g_shmid, NULL, 0)) == (Client *) -1) {
+        perror("shmat");
+        exit(1);
+    }
+
+    int r = 0;
+
+    if(shm[client_id].valid)    r = shm[client_id].pid; 
+    shmdt(shm);
+
+    return r;
+
+}
+
 /* [Public] Recieve (Signal Callback) */
 void broadcast_catch(int signo) {
 
@@ -183,5 +200,22 @@ void broadcast_cmd_yell(char *buff) {
     shmdt(msg);
 
     broadcast_sender_all();
+
+}
+
+void broadcast_cmd_tell(int target_id, char *buff) {
+
+    char *msg;
+    if ((msg = shmat(g_shmid_msg, NULL, 0)) == (char *) -1) {
+        perror("shmat");
+        exit(1);
+    }
+    
+    // strip twice to remove first two words
+    sprintf(msg, "*** %s told you ***: %s\n", get_my_name(), get_following(get_following(buff)));
+
+    shmdt(msg);
+
+    broadcast_sender_pid(get_pid_from_client_id(target_id));
 
 }

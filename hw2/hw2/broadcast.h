@@ -6,6 +6,7 @@ void broadcast_user_disconnect();
 
 void broadcast_cmd_name();
 void broadcast_cmd_yell(char *buff);
+void broadcast_cmd_tell(int target_id, char *buff);
 
 void broadcast_catch(int signo);
 void broadcast_init(int connfd);
