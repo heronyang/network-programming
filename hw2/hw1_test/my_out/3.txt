@@ -1,7 +1,7 @@
 ****************************************
 ** Welcome to the information server. **
 ****************************************
-*** User '(no name)' entered from 127.0.0.1/51583. ***
+*** User '(no name)' entered from 127.0.0.1/51686. ***
 % removetag test.html |5
 % removetag test.html | number > ls.txt
 % removetag0 test.html |1
@@ -10,3 +10,37 @@ Error: illegal tag "!test.html"
 % UNKNOWN_COMMAND!
 Unknown command: [UNKNOWN_COMMAND!].
 % number
+   1    1 
+   2    2 Test
+   3    3 This is a test program
+   4    4 for ras.
+   5    5 
+   6    6    1 
+   7    7    2 Test
+   8    8    3 This is a test program
+   9    9    4 for ras.
+  10   10    5 
+  11    1 
+  12    2 Test
+  13    3 This is a test program
+  14    4 for ras.
+  15    5 
+% ls |4 ls |3
+% ls | number | cat
+bin
+ls.txt
+outtest1.txt
+outtest2.txt
+test.html
+bin
+ls.txt
+outtest1.txt
+outtest2.txt
+test.html
+   1 bin
+   2 ls.txt
+   3 outtest1.txt
+   4 outtest2.txt
+   5 test.html
+% exit
+*** User '(no name)' left. ***

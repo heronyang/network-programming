@@ -350,6 +350,7 @@ void command_handler(int connfd) {
                     return;
                 }
 
+                pipe_shift();
                 return;
 
             }

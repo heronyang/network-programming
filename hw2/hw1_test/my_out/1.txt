@@ -1,14 +1,12 @@
 ****************************************
 ** Welcome to the information server. **
 ****************************************
-*** User '(no name)' entered from 127.0.0.1/51579. ***
+*** User '(no name)' entered from 127.0.0.1/51684. ***
 % printenv PATH
 PATH=bin:.
 % ls
 bin
 ls.txt
-test1.txt
-test2.txt
 test.html
 % setenv PATH .
 % printenv PATH

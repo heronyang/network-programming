@@ -1,7 +1,7 @@
 ****************************************
 ** Welcome to the information server. **
 ****************************************
-*** User '(no name)' entered from 127.0.0.1/51580. ***
+*** User '(no name)' entered from 127.0.0.1/51685. ***
 % cat test.html
 <!test.html>
 <TITLE>Test<TITLE>
