@@ -67,7 +67,7 @@ int fork_and_exec_last(int connfd, char **cmd) {
 // simple exec (no pipe included, but for piping OUTs)
 int fork_and_exec_pipe(int connfd, char **cmd, int p_n) {
 
-    if(strcmp(cmd[0], "cat")==0 && cmd[1]==NULL)    return SKIP_SHIFT;
+    // if(strcmp(cmd[0], "cat")==0 && cmd[1]==NULL)    return SKIP_SHIFT;
 
     // create pipe
     int *fd = pipe_create(p_n);
