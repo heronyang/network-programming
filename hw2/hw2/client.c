@@ -362,14 +362,14 @@ void command_handler(int connfd) {
 
                 source_id--;
 
-                if(!check_client_exist(source_id)) {
-                    sprintf(send_buff, "*** Error: user #%d does not exist yet. ***\n", source_id+1);
+                if(!fifo_lock_get(source_id, get_my_client_id())) {
+                    sprintf(send_buff, "*** Error: the pipe #%d->#%d does not exist yet. ***\n", source_id+1, get_my_client_id()+1);
                     write(connfd, send_buff, strlen(send_buff)); 
                     return;
                 }
 
-                if(!fifo_lock_get(source_id, get_my_client_id())) {
-                    sprintf(send_buff, "*** Error: the pipe #%d->#%d does not exist yet. ***\n", source_id+1, get_my_client_id()+1);
+                if(!check_client_exist(source_id)) {
+                    sprintf(send_buff, "*** Error: user #%d does not exist yet. ***\n", source_id+1);
                     write(connfd, send_buff, strlen(send_buff)); 
                     return;
                 }
@@ -393,14 +393,14 @@ void command_handler(int connfd) {
 
                 target_id --;
 
-                if(!check_client_exist(target_id)) {
-                    sprintf(send_buff, "*** Error: user #%d does not exist yet. ***\n", target_id+1);
+                if(fifo_lock_get(get_my_client_id(), target_id)) {
+                    sprintf(send_buff, "*** Error: the pipe #%d->#%d already exists. ***\n", get_my_client_id()+1, target_id+1);
                     write(connfd, send_buff, strlen(send_buff)); 
                     return;
                 }
 
-                if(fifo_lock_get(get_my_client_id(), target_id)) {
-                    sprintf(send_buff, "*** Error: the pipe #%d->#%d already exists. ***\n", get_my_client_id()+1, target_id+1);
+                if(!check_client_exist(target_id)) {
+                    sprintf(send_buff, "*** Error: user #%d does not exist yet. ***\n", target_id+1);
                     write(connfd, send_buff, strlen(send_buff)); 
                     return;
                 }
@@ -446,17 +446,6 @@ void command_handler(int connfd) {
                 target_id--, source_id--;
 
                 char **argv_s = extract_command(i);
-                if(!check_client_exist(source_id)) {
-                    sprintf(send_buff, "*** Error: user #%d does not exist yet. ***\n", source_id+1);
-                    write(connfd, send_buff, strlen(send_buff)); 
-                    return;
-                }
-
-                if(!check_client_exist(target_id)) {
-                    sprintf(send_buff, "*** Error: user #%d does not exist yet. ***\n", target_id+1);
-                    write(connfd, send_buff, strlen(send_buff)); 
-                    return;
-                }
 
                 if(!fifo_lock_get(source_id, get_my_client_id())) {
                     sprintf(send_buff, "*** Error: the pipe #%d->#%d does not exist yet. ***\n", source_id+1, get_my_client_id()+1);
@@ -466,6 +455,18 @@ void command_handler(int connfd) {
 
                 if(fifo_lock_get(get_my_client_id(), target_id)) {
                     sprintf(send_buff, "*** Error: the pipe #%d->#%d already exists. ***\n", get_my_client_id()+1, target_id+1);
+                    write(connfd, send_buff, strlen(send_buff)); 
+                    return;
+                }
+
+                if(!check_client_exist(source_id)) {
+                    sprintf(send_buff, "*** Error: user #%d does not exist yet. ***\n", source_id+1);
+                    write(connfd, send_buff, strlen(send_buff)); 
+                    return;
+                }
+
+                if(!check_client_exist(target_id)) {
+                    sprintf(send_buff, "*** Error: user #%d does not exist yet. ***\n", target_id+1);
                     write(connfd, send_buff, strlen(send_buff)); 
                     return;
                 }
@@ -501,9 +502,6 @@ void command_handler(int connfd) {
 void client_handler(int connfd) {
 
     init_env();
-
-    // handle (first)
-    welcome_msg(connfd);
 
     // handle (rest)
     while(1) {

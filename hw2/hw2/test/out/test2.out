@@ -1,0 +1,150 @@
+
+login1
+1| *** User '(no name)' entered from 127.0.0.1/51508. ***
+1| ****************************************
+1| ** Welcome to the information server. **
+1| ****************************************
+1| % 
+
+1 % who
+1| <ID>	<nickname>	<IP/port>	<indicate me>
+1| 1	(no name)	127.0.0.1/51508	<- me
+1| % 
+
+login2
+1| *** User '(no name)' entered from 127.0.0.1/51509. ***
+2| *** User '(no name)' entered from 127.0.0.1/51509. ***
+2| ****************************************
+2| ** Welcome to the information server. **
+2| ****************************************
+2| % 
+
+2 % name user2
+1| *** User from 127.0.0.1/51509 is named 'user2'. ***
+2| *** User from 127.0.0.1/51509 is named 'user2'. ***
+2| % 
+
+2 % who
+2| <ID>	<nickname>	<IP/port>	<indicate me>
+2| 1	(no name)	127.0.0.1/51508
+2| 2	user2	127.0.0.1/51509	<- me
+2| % 
+
+1 % who
+1| <ID>	<nickname>	<IP/port>	<indicate me>
+1| 1	(no name)	127.0.0.1/51508	<- me
+1| 2	user2	127.0.0.1/51509
+1| % 
+
+1 % name user2
+1| *** User 'user2' already exists. ***
+1| % 
+
+1 % name user11
+1| *** User from 127.0.0.1/51508 is named 'user11'. ***
+1| % 
+2| *** User from 127.0.0.1/51508 is named 'user11'. ***
+
+1 % name user111
+1| *** User from 127.0.0.1/51508 is named 'user111'. ***
+1| % 
+2| *** User from 127.0.0.1/51508 is named 'user111'. ***
+
+login3
+1| *** User '(no name)' entered from 127.0.0.1/51510. ***
+2| *** User '(no name)' entered from 127.0.0.1/51510. ***
+3| *** User '(no name)' entered from 127.0.0.1/51510. ***
+3| ****************************************
+3| ** Welcome to the information server. **
+3| ****************************************
+3| % 
+
+3 % who
+3| <ID>	<nickname>	<IP/port>	<indicate me>
+3| 1	user111	127.0.0.1/51508
+3| 2	user2	127.0.0.1/51509
+3| 3	(no name)	127.0.0.1/51510	<- me
+3| % 
+
+3 % name user11
+1| *** User from 127.0.0.1/51510 is named 'user11'. ***
+2| *** User from 127.0.0.1/51510 is named 'user11'. ***
+3| *** User from 127.0.0.1/51510 is named 'user11'. ***
+3| % 
+
+3 % who
+3| <ID>	<nickname>	<IP/port>	<indicate me>
+3| 1	user111	127.0.0.1/51508
+3| 2	user2	127.0.0.1/51509
+3| 3	user11	127.0.0.1/51510	<- me
+3| % 
+
+3 % name user3
+1| *** User from 127.0.0.1/51510 is named 'user3'. ***
+2| *** User from 127.0.0.1/51510 is named 'user3'. ***
+3| *** User from 127.0.0.1/51510 is named 'user3'. ***
+3| % 
+
+3 % who
+3| <ID>	<nickname>	<IP/port>	<indicate me>
+3| 1	user111	127.0.0.1/51508
+3| 2	user2	127.0.0.1/51509
+3| 3	user3	127.0.0.1/51510	<- me
+3| % 
+
+1 % cat test.html |1
+1| % 
+
+1 % cat | removetag |1
+1| % 
+
+2 % removetag test.html | noop | number | number | number |1
+2| % 
+
+1 % number > test1.txt
+1| % 
+
+1 % cat test1.txt | number > test2.txt
+1| % 
+
+1 % cat test2.txt
+1|    1    1 
+1|    2    2 Test
+1|    3    3 This is a test program
+1|    4    4 for ras.
+1|    5    5 
+1| % 
+
+2 % cat
+2| % 
+
+logout1
+2| *** User 'user111' left. ***
+3| *** User 'user111' left. ***
+
+logout2
+3| *** User 'user2' left. ***
+
+3 % removetag0 test.html | number
+3| Error: illegal tag "!test.html"
+3|    1 
+3|    2 Test
+3|    3 This is a test program
+3|    4 for ras.
+3|    5 
+3| % 
+
+3 % ls | cat |3
+3| % 
+
+3 % noop
+3| % 
+
+3 % ccccc
+3| Unknown command: [ccccc].
+3| % 
+
+3 % noop
+3| % 
+
+3 % cat

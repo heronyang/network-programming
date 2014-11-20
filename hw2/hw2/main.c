@@ -263,8 +263,12 @@ int main(int argc, char *argv[]) {
             // client: init
             fprintf(stderr, "accepted connection: %d\n", connfd);
             shm_client_new(g_shmid, serv_addr, connfd);
+
             broadcast_init(connfd);
+
+            welcome_msg(connfd);
             broadcast_user_connect(serv_addr);
+
             fifo_init();
 
             // client: handle
