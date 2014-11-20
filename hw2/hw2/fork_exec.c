@@ -205,7 +205,7 @@ int fork_and_exec_fifo_in(int connfd, char **cmd, int source_id) {
         if(!DEBUG)  dup2(connfd, STDERR_FILENO);
 
         // redirect STDIN to pipe_map[0][READ]
-        fprintf(stderr, "fifo_in: fifo_path../%sclient_%d_%d\n", FIFO_PATH_DIR, source_id, client_id);
+        if(DEBUG)   fprintf(stderr, "fifo_in: fifo_path../%sclient_%d_%d\n", FIFO_PATH_DIR, source_id, client_id);
         dup2(fifo_fd[source_id][client_id], STDIN_FILENO);
 
         if( cmd[0][0]=='/' || execvp(cmd[0], cmd)<0 ) {

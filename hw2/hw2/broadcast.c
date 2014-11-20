@@ -136,7 +136,7 @@ void broadcast_catch(int signo) {
     }
 
     if (signo == SIGUSR1) {
-        fprintf(stderr, "get SIGUSR1: %s\n", msg);
+        if(DEBUG)   fprintf(stderr, "get SIGUSR1: %s\n", msg);
         if(write(client_socket, msg, strlen(msg)) < 0)
             perror("write");
     }

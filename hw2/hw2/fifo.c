@@ -6,9 +6,13 @@
 #include <unistd.h>
 #include <string.h>
 #include <stdio.h>
+#include <stdlib.h>
+#include <arpa/inet.h>    //close
+#include <string.h>
 
 #include "constant.h"
 #include "variable.h"
+#include "broadcast.h"
 
 int fifo_fd[CLIENT_MAX_NUM][CLIENT_MAX_NUM];
 
@@ -42,6 +46,14 @@ void fifo_close() {
     int i, j;
     char fifo_path[PATH_LENGTH];
 
+    // clean up unread fifo
+    int client_id = get_my_client_id();
+    char c;
+    for( i=0 ; i<CLIENT_MAX_NUM ; i++ ) {
+        while(read(fifo_fd[i][client_id], &c, 1) != 0)    ;
+    }
+
+    // close all fifo
     for( i=0 ; i<CLIENT_MAX_NUM ; i++ ) {
 
         for( j=0 ; j<CLIENT_MAX_NUM ; j++ ) {
