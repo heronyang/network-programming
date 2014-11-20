@@ -354,7 +354,7 @@ void command_handler(int connfd) {
 
             }
 
-            if(argv[i] && strlen(argv[i])!=1 && argv[i][0] == '<') {
+            if(argv[i] && strlen(argv[i])!=1 && argv[i][0] == '<' && argc == i+1) {
 
                 char **argv_s = extract_command(i);
                 int source_id;
@@ -383,7 +383,7 @@ void command_handler(int connfd) {
 
             }
 
-            if(argv[i] && strlen(argv[i])!=1 && argv[i][0] == '>') {
+            if(argv[i] && strlen(argv[i])!=1 && argv[i][0] == '>' && argc == i+1) {
 
                 char **argv_s = extract_command(i);
                 int target_id;
@@ -410,6 +410,73 @@ void command_handler(int connfd) {
 
                 return;
 
+            }
+
+            if(argv[i] && strlen(argv[i])!=1 && (argv[i][0] == '<' || argv[i][0] == '>') && argc != i+1) {
+
+                int target_id, source_id;
+
+                // get target_id, source_id
+                if(argv[i][0] == '<') {
+                    if(sscanf(argv[i], "<%d", &source_id) != 1) {
+                        perror("sscanf");
+                        return;
+                    }
+                    if(sscanf(argv[i+1], ">%d", &target_id) != 1) {
+                        perror("sscanf");
+                        return;
+                    }
+                } else {
+                    if(sscanf(argv[i], ">%d", &target_id) != 1) {
+                        perror("sscanf");
+                        return;
+                    }
+                    if(sscanf(argv[i+1], "<%d", &source_id) != 1) {
+                        perror("sscanf");
+                        return;
+                    }
+                }
+
+                fprintf(stderr, "source_id=%d\ttarget_id=%d\n", source_id, target_id);
+
+                char **argv_s = extract_command(i);
+                if(!check_client_exist(source_id)) {
+                    sprintf(send_buff, "*** Error: user #%d does not exist yet. ***\n", source_id);
+                    write(connfd, send_buff, strlen(send_buff)); 
+                    return;
+                }
+
+                if(!check_client_exist(target_id)) {
+                    sprintf(send_buff, "*** Error: user #%d does not exist yet. ***\n", target_id);
+                    write(connfd, send_buff, strlen(send_buff)); 
+                    return;
+                }
+
+                if(!fifo_lock_get(source_id, get_my_client_id())) {
+                    sprintf(send_buff, "*** Error: the pipe #%d->#%d does not exist yet. ***\n", source_id, get_my_client_id());
+                    write(connfd, send_buff, strlen(send_buff)); 
+                    return;
+                }
+
+                if(fifo_lock_get(get_my_client_id(), target_id)) {
+                    sprintf(send_buff, "*** Error: the pipe #%d->#%d already exists. ***\n", get_my_client_id(), target_id);
+                    write(connfd, send_buff, strlen(send_buff)); 
+                    return;
+                }
+
+                if( fork_and_exec_fifo_in_out(connfd, argv_s, source_id, target_id) == EXIT_FAILURE ) {
+                    return;
+                } else {
+
+                    fifo_lock_set(source_id, get_my_client_id(), FALSE);
+                    fifo_lock_set(get_my_client_id(), target_id, TRUE);
+
+                    broadcast_cmd_fifo_in(source_id, original_read_buff);
+                    broadcast_cmd_fifo_out(target_id, original_read_buff);
+
+                }
+
+                return;
             }
 
         }

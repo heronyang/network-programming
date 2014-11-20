@@ -276,6 +276,55 @@ int fork_and_exec_fifo_out(int connfd, char **cmd, int target_id) {
     return EXIT_SUCCESS;
 }
 
+int fork_and_exec_fifo_in_out(int connfd, char **cmd, int source_id, int target_id) {
+
+    int client_id = get_my_client_id();
+
+    int fd;
+    char fifo_path[PATH_LENGTH];
+
+    pid_t pid;
+    pid = fork();
+
+    if(pid<0) {                     // if error
+
+        fprintf(stderr, "Fork failed\n");
+        exit(EXIT_FAILURE);
+
+    } else if (pid ==0) {           // if child
+
+        // out
+        sprintf(fifo_path, "../%sclient_%d_%d", FIFO_PATH_DIR, client_id, target_id);
+        fprintf(stderr, "fifo_path:%s\n", fifo_path);
+        if((fd = open(fifo_path, O_NONBLOCK | O_WRONLY) ) < 0) {
+            perror("open");
+        }
+
+        dup2(fd, STDOUT_FILENO);
+        if(!DEBUG)  dup2(fd, STDERR_FILENO);
+
+        // in
+        if(DEBUG)   fprintf(stderr, "fifo_in: fifo_path../%sclient_%d_%d\n", FIFO_PATH_DIR, source_id, client_id);
+        dup2(fifo_fd[source_id][client_id], STDIN_FILENO);
+
+        if( cmd[0][0]=='/' || execvp(cmd[0], cmd)<0 ) {
+            fprintf(stderr, "Unknown command: [%s].\n", cmd[0]);
+            exit(EXIT_FAILURE);
+        }
+
+        exit(EXIT_SUCCESS);
+
+    } else {
+
+        int return_val;    
+        waitpid(pid, &return_val, 0);
+        if( WEXITSTATUS(return_val) == EXIT_FAILURE )  return EXIT_FAILURE;
+
+    }
+
+    return EXIT_SUCCESS;
+
+}
 /*
  * Debug Functions
  */
