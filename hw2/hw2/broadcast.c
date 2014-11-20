@@ -228,7 +228,7 @@ void broadcast_cmd_yell(char *buff) {
         perror("shmat");
         exit(1);
     }
-    
+
     sprintf(msg, "*** %s yelled ***: %s\n", get_my_name(), get_following(buff));
 
     shmdt(msg);
@@ -244,7 +244,7 @@ void broadcast_cmd_tell(int target_id, char *buff) {
         perror("shmat");
         exit(1);
     }
-    
+
     // strip twice to remove first two words
     sprintf(msg, "*** %s told you ***: %s\n", get_my_name(), get_following(get_following(buff)));
 
@@ -252,4 +252,44 @@ void broadcast_cmd_tell(int target_id, char *buff) {
 
     broadcast_sender_pid(get_pid_from_client_id(target_id));
 
+}
+
+void broadcast_cmd_fifo_in(int source_id, char *cmd) {
+    // *** (my name) (#<my client id>) just received from (other client's name) (#<other client's id>) by '(command line)' ***
+    // ex. *** IamUser (#3) just received from student7 (#7) by 'cat <7' ***
+    
+    int len = strlen(cmd);
+    if(cmd[len-1] == '\n')  cmd[len-1] = '\0';
+
+    char *msg;
+    if ((msg = shmat(g_shmid_msg, NULL, 0)) == (char *) -1) {
+        perror("shmat");
+        exit(1);
+    }
+
+    // strip twice to remove first two words
+    sprintf(msg, "*** %s (#%d) just received from %s (#%d) by '%s' ***\n", get_my_name(), get_my_client_id(), getname(source_id), source_id, cmd);
+
+    shmdt(msg);
+    broadcast_sender_all();
+}
+
+void broadcast_cmd_fifo_out(int target_id, char *cmd) {
+    // *** (name) (#<client id>) just piped '(command line)' to (receiver's name) (#<receiver's client_id>) ***
+    // ex. *** IamUser (#3) just piped 'cat test.html | cat >1' to Iam1 (#1) ***
+
+    int len = strlen(cmd);
+    if(cmd[len-1] == '\n')  cmd[len-1] = '\0';
+
+    char *msg;
+    if ((msg = shmat(g_shmid_msg, NULL, 0)) == (char *) -1) {
+        perror("shmat");
+        exit(1);
+    }
+
+    // strip twice to remove first two words
+    sprintf(msg, "*** %s (#%d) just piped '%s' to %s (#%d) ***\n", get_my_name(), get_my_client_id(), cmd, getname(target_id), target_id);
+
+    shmdt(msg);
+    broadcast_sender_all();
 }

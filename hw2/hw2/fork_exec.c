@@ -187,7 +187,7 @@ int fork_and_exec_file(int connfd, char **cmd, char *filepath) {
 
 }
 
-int fork_and_exec_pipe_in(int connfd, char **cmd, int source_id) {
+int fork_and_exec_fifo_in(int connfd, char **cmd, int source_id) {
 
     int client_id = get_my_client_id();
 
@@ -205,7 +205,7 @@ int fork_and_exec_pipe_in(int connfd, char **cmd, int source_id) {
         if(!DEBUG)  dup2(connfd, STDERR_FILENO);
 
         // redirect STDIN to pipe_map[0][READ]
-        fprintf(stderr, "pipe_in: fifo_path../%sclient_%d_%d\n", FIFO_PATH_DIR, source_id, client_id);
+        fprintf(stderr, "fifo_in: fifo_path../%sclient_%d_%d\n", FIFO_PATH_DIR, source_id, client_id);
         dup2(fifo_fd[source_id][client_id], STDIN_FILENO);
 
         if( cmd[0][0]=='/' || execvp(cmd[0], cmd)<0 ) {
@@ -227,7 +227,7 @@ int fork_and_exec_pipe_in(int connfd, char **cmd, int source_id) {
 
 }
 
-int fork_and_exec_pipe_out(int connfd, char **cmd, int target_id) {
+int fork_and_exec_fifo_out(int connfd, char **cmd, int target_id) {
 
     int client_id = get_my_client_id();
 

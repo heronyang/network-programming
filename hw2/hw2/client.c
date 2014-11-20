@@ -25,6 +25,7 @@
  */
 char send_buff[SIZE_SEND_BUFF];
 char read_buff[SIZE_READ_BUFF];
+char original_read_buff[SIZE_READ_BUFF];
 
 char **argv;
 int argc = 0;
@@ -198,7 +199,6 @@ int prompt(int connfd) {
     r = read_helper(connfd, read_buff);
     if(r == 1)  return COMMAND_HANDLED;
 
-    char original_read_buff[SIZE_READ_BUFF];
     strcpy(original_read_buff, read_buff);
 
     argv = command_decode(read_buff);
@@ -341,24 +341,6 @@ void command_handler(int connfd) {
 
             }
 
-            if(argv[i] && strlen(argv[i])!=1 && argv[i][0] == '>') {
-
-                char **argv_s = extract_command(i);
-                int target_id;
-                sscanf(argv[i], ">%d", &target_id);
-                if(!check_client_exist(target_id)) {
-                    sprintf(send_buff, "*** Error: user #%d does not exist yet. ***\n", target_id);
-                    write(connfd, send_buff, strlen(send_buff)); 
-                    return;
-                }
-                if( fork_and_exec_pipe_out(connfd, argv_s, target_id) == EXIT_FAILURE ) {
-                    return;
-                }
-
-                return;
-
-            }
-
             if(argv[i] && strlen(argv[i])!=1 && argv[i][0] == '<') {
 
                 char **argv_s = extract_command(i);
@@ -370,13 +352,36 @@ void command_handler(int connfd) {
                     return;
                 }
 
-                if( fork_and_exec_pipe_in(connfd, argv_s, source_id) == EXIT_FAILURE ) {
+                if( fork_and_exec_fifo_in(connfd, argv_s, source_id) == EXIT_FAILURE ) {
                     return;
+                } else {
+                    broadcast_cmd_fifo_in(source_id, original_read_buff);
                 }
 
                 return;
 
             }
+
+            if(argv[i] && strlen(argv[i])!=1 && argv[i][0] == '>') {
+
+                char **argv_s = extract_command(i);
+                int target_id;
+                sscanf(argv[i], ">%d", &target_id);
+                if(!check_client_exist(target_id)) {
+                    sprintf(send_buff, "*** Error: user #%d does not exist yet. ***\n", target_id);
+                    write(connfd, send_buff, strlen(send_buff)); 
+                    return;
+                }
+                if( fork_and_exec_fifo_out(connfd, argv_s, target_id) == EXIT_FAILURE ) {
+                    return;
+                } else {
+                    broadcast_cmd_fifo_out(target_id, original_read_buff);
+                }
+
+                return;
+
+            }
+
         }
 
         if(!is_pipe)    break;
