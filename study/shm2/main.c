@@ -9,7 +9,7 @@
 typedef struct {
     int valid;
     int pid;
-    char *name;
+    char *name; // name = malloc(size...)
     char *ip;
     uint16_t port;
 } Client;

@@ -75,6 +75,27 @@ char *get_following(char *buff) {
 
 }
 
+int get_my_client_id() {
+
+    Client *shm;
+    if ((shm = shmat(g_shmid, NULL, 0)) == (Client *) -1) {
+        perror("shmat");
+        exit(1);
+    }
+
+    int i, pid = getpid();
+    int res = 0;
+    for( i=0 ; i<CLIENT_MAX_NUM ; i++ ) {
+        if(shm[i].valid && shm[i].pid == pid) {
+            res = i;
+        }
+    }
+
+    shmdt(shm);
+
+    return res;
+}
+
 int get_pid_from_client_id(int client_id) {
 
     Client *shm;

@@ -17,8 +17,6 @@ int main(void)
     pid_t pid;
     pid = fork();
 
-    if (signal(SIGUSR1, sig_handler) == SIG_ERR)
-        printf("\ncan't catch SIGUSR1\n");
 
     if(pid<0) {                     // if error
 
@@ -35,6 +33,9 @@ int main(void)
         exit(1);
 
     } else {                        // if parent
+
+        if (signal(SIGUSR1, sig_handler) == SIG_ERR)
+            printf("\ncan't catch SIGUSR1\n");
 
         printf("parent: pid = %d\n", (int) getpid ());
 

@@ -14,9 +14,10 @@
 #include "pipe.h"
 #include "fork_exec.h"
 #include "variable.h"
+#include "broadcast.h"
 
 char pipe_buff[SIZE_PIPE_BUFF];
-int fifo_fd[CLIENT_MAX_NUM];
+int fifo_fd[CLIENT_MAX_NUM][CLIENT_MAX_NUM];
 
 /*
  * Handler (fork_and_exec)
@@ -188,6 +189,8 @@ int fork_and_exec_file(int connfd, char **cmd, char *filepath) {
 
 int fork_and_exec_pipe_in(int connfd, char **cmd, int source_id) {
 
+    int client_id = get_my_client_id();
+
     pid_t pid;
     pid = fork();
 
@@ -202,7 +205,8 @@ int fork_and_exec_pipe_in(int connfd, char **cmd, int source_id) {
         if(!DEBUG)  dup2(connfd, STDERR_FILENO);
 
         // redirect STDIN to pipe_map[0][READ]
-        dup2(fifo_fd[source_id], STDIN_FILENO);
+        fprintf(stderr, "pipe_in: fifo_path../%sclient_%d_%d\n", FIFO_PATH_DIR, source_id, client_id);
+        dup2(fifo_fd[source_id][client_id], STDIN_FILENO);
 
         if( cmd[0][0]=='/' || execvp(cmd[0], cmd)<0 ) {
             fprintf(stderr, "Unknown command: [%s].\n", cmd[0]);
@@ -225,6 +229,8 @@ int fork_and_exec_pipe_in(int connfd, char **cmd, int source_id) {
 
 int fork_and_exec_pipe_out(int connfd, char **cmd, int target_id) {
 
+    int client_id = get_my_client_id();
+
     int fd;
     char fifo_path[PATH_LENGTH];
 
@@ -238,7 +244,7 @@ int fork_and_exec_pipe_out(int connfd, char **cmd, int target_id) {
 
     } else if (pid ==0) {           // if child
 
-        sprintf(fifo_path, "../%sclient_%d", FIFO_PATH_DIR, target_id);
+        sprintf(fifo_path, "../%sclient_%d_%d", FIFO_PATH_DIR, client_id, target_id);
         fprintf(stderr, "fifo_path:%s\n", fifo_path);
         if((fd = open(fifo_path, O_NONBLOCK | O_WRONLY) ) < 0) {
             perror("open");

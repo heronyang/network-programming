@@ -13,5 +13,6 @@ void broadcast_init(int connfd);
 
 /* tools */
 int check_client_exist(int client_id);
+int get_my_client_id();
 
 #endif
