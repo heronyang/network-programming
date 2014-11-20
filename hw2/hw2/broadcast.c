@@ -268,7 +268,7 @@ void broadcast_cmd_fifo_in(int source_id, char *cmd) {
     }
 
     // strip twice to remove first two words
-    sprintf(msg, "*** %s (#%d) just received from %s (#%d) by '%s' ***\n", get_my_name(), get_my_client_id(), getname(source_id), source_id, cmd);
+    sprintf(msg, "*** %s (#%d) just received from %s (#%d) by '%s' ***\n", get_my_name(), get_my_client_id()+1, getname(source_id), source_id+1, cmd);
 
     shmdt(msg);
     broadcast_sender_all();
@@ -288,7 +288,7 @@ void broadcast_cmd_fifo_out(int target_id, char *cmd) {
     }
 
     // strip twice to remove first two words
-    sprintf(msg, "*** %s (#%d) just piped '%s' to %s (#%d) ***\n", get_my_name(), get_my_client_id(), cmd, getname(target_id), target_id);
+    sprintf(msg, "*** %s (#%d) just piped '%s' to %s (#%d) ***\n", get_my_name(), get_my_client_id()+1, cmd, getname(target_id), target_id+1);
 
     shmdt(msg);
     broadcast_sender_all();

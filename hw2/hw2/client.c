@@ -120,7 +120,7 @@ void cmd_who(int connfd) {
 
         if(!shm[i].valid)   continue;
 
-        sprintf(t_s, "%d\t%s\t%s/%d", i, getname(i), shm[i].ip, shm[i].port);
+        sprintf(t_s, "%d\t%s\t%s/%d", i+1, getname(i), shm[i].ip, shm[i].port);
 
         if(shm[i].pid == pid) {
             strcat(t_s, "\t<- me\n");
@@ -188,7 +188,7 @@ void cmd_tell(int connfd, int target_id, char *buff) {
 
     if(!valid) {
 
-        sprintf(send_buff, "*** Error: user #%d does not exist yet. ***\n", target_id);
+        sprintf(send_buff, "*** Error: user #%d does not exist yet. ***\n", target_id+1);
         write(connfd, send_buff, strlen(send_buff)); 
 
     } else {
@@ -237,7 +237,7 @@ int prompt(int connfd) {
         return COMMAND_HANDLED;
     }
     if(strcmp(argv[0], "tell") == 0) {
-        cmd_tell(connfd, atoi(argv[1]), original_read_buff);
+        cmd_tell(connfd, atoi(argv[1])-1, original_read_buff);
         return COMMAND_HANDLED;
     }
 
@@ -360,14 +360,16 @@ void command_handler(int connfd) {
                 int source_id;
                 sscanf(argv[i], "<%d", &source_id);
 
+                source_id--;
+
                 if(!check_client_exist(source_id)) {
-                    sprintf(send_buff, "*** Error: user #%d does not exist yet. ***\n", source_id);
+                    sprintf(send_buff, "*** Error: user #%d does not exist yet. ***\n", source_id+1);
                     write(connfd, send_buff, strlen(send_buff)); 
                     return;
                 }
 
                 if(!fifo_lock_get(source_id, get_my_client_id())) {
-                    sprintf(send_buff, "*** Error: the pipe #%d->#%d does not exist yet. ***\n", source_id, get_my_client_id());
+                    sprintf(send_buff, "*** Error: the pipe #%d->#%d does not exist yet. ***\n", source_id+1, get_my_client_id()+1);
                     write(connfd, send_buff, strlen(send_buff)); 
                     return;
                 }
@@ -389,14 +391,16 @@ void command_handler(int connfd) {
                 int target_id;
                 sscanf(argv[i], ">%d", &target_id);
 
+                target_id --;
+
                 if(!check_client_exist(target_id)) {
-                    sprintf(send_buff, "*** Error: user #%d does not exist yet. ***\n", target_id);
+                    sprintf(send_buff, "*** Error: user #%d does not exist yet. ***\n", target_id+1);
                     write(connfd, send_buff, strlen(send_buff)); 
                     return;
                 }
 
                 if(fifo_lock_get(get_my_client_id(), target_id)) {
-                    sprintf(send_buff, "*** Error: the pipe #%d->#%d already exists. ***\n", get_my_client_id(), target_id);
+                    sprintf(send_buff, "*** Error: the pipe #%d->#%d already exists. ***\n", get_my_client_id()+1, target_id+1);
                     write(connfd, send_buff, strlen(send_buff)); 
                     return;
                 }
@@ -437,29 +441,31 @@ void command_handler(int connfd) {
                     }
                 }
 
-                fprintf(stderr, "source_id=%d\ttarget_id=%d\n", source_id, target_id);
+                if(DEBUG)   fprintf(stderr, "source_id=%d\ttarget_id=%d\n", source_id, target_id);
+
+                target_id--, source_id--;
 
                 char **argv_s = extract_command(i);
                 if(!check_client_exist(source_id)) {
-                    sprintf(send_buff, "*** Error: user #%d does not exist yet. ***\n", source_id);
+                    sprintf(send_buff, "*** Error: user #%d does not exist yet. ***\n", source_id+1);
                     write(connfd, send_buff, strlen(send_buff)); 
                     return;
                 }
 
                 if(!check_client_exist(target_id)) {
-                    sprintf(send_buff, "*** Error: user #%d does not exist yet. ***\n", target_id);
+                    sprintf(send_buff, "*** Error: user #%d does not exist yet. ***\n", target_id+1);
                     write(connfd, send_buff, strlen(send_buff)); 
                     return;
                 }
 
                 if(!fifo_lock_get(source_id, get_my_client_id())) {
-                    sprintf(send_buff, "*** Error: the pipe #%d->#%d does not exist yet. ***\n", source_id, get_my_client_id());
+                    sprintf(send_buff, "*** Error: the pipe #%d->#%d does not exist yet. ***\n", source_id+1, get_my_client_id()+1);
                     write(connfd, send_buff, strlen(send_buff)); 
                     return;
                 }
 
                 if(fifo_lock_get(get_my_client_id(), target_id)) {
-                    sprintf(send_buff, "*** Error: the pipe #%d->#%d already exists. ***\n", get_my_client_id(), target_id);
+                    sprintf(send_buff, "*** Error: the pipe #%d->#%d already exists. ***\n", get_my_client_id()+1, target_id+1);
                     write(connfd, send_buff, strlen(send_buff)); 
                     return;
                 }
