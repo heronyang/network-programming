@@ -28,6 +28,7 @@
 #include "broadcast.h"
 #include "client_name.h"
 #include "fifo.h"
+#include "fifo_lock.h"
 
 /* Globals */
 int child_count = 0;
@@ -193,6 +194,7 @@ void catch_int(int i) {
     // release shared memory from system
     shm_delete();
     fifo_finalize();
+    fifo_lock_close();
     exit(0);    // end program
 
 }
@@ -214,6 +216,7 @@ int main(int argc, char *argv[]) {
 
     /* SHM: init */
     shm_init();
+    fifo_lock_init();
 
     /* init */
     listenfd = socket(AF_INET, SOCK_STREAM, 0);

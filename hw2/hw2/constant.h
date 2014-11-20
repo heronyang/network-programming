@@ -24,6 +24,7 @@
 #define SHM_KEY         5123
 #define SHM_MSG_KEY     5124
 #define SHM_NAME_KEY    5125
+#define SHM_FIFO_LOCK_KEY   5126
 
 #define CLIENT_MAX_NUM  30
 

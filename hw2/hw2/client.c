@@ -19,6 +19,7 @@
 #include "variable.h"
 #include "client_name.h"
 #include "broadcast.h"
+#include "fifo_lock.h"
 
 /*
  * Globals
@@ -358,8 +359,15 @@ void command_handler(int connfd) {
                 char **argv_s = extract_command(i);
                 int source_id;
                 sscanf(argv[i], "<%d", &source_id);
+
                 if(!check_client_exist(source_id)) {
                     sprintf(send_buff, "*** Error: user #%d does not exist yet. ***\n", source_id);
+                    write(connfd, send_buff, strlen(send_buff)); 
+                    return;
+                }
+
+                if(!fifo_lock_get(source_id, get_my_client_id())) {
+                    sprintf(send_buff, "*** Error: the pipe #%d->#%d does not exist yet. ***\n", source_id, get_my_client_id());
                     write(connfd, send_buff, strlen(send_buff)); 
                     return;
                 }
@@ -367,6 +375,7 @@ void command_handler(int connfd) {
                 if( fork_and_exec_fifo_in(connfd, argv_s, source_id) == EXIT_FAILURE ) {
                     return;
                 } else {
+                    fifo_lock_set(source_id, get_my_client_id(), FALSE);
                     broadcast_cmd_fifo_in(source_id, original_read_buff);
                 }
 
@@ -379,14 +388,23 @@ void command_handler(int connfd) {
                 char **argv_s = extract_command(i);
                 int target_id;
                 sscanf(argv[i], ">%d", &target_id);
+
                 if(!check_client_exist(target_id)) {
                     sprintf(send_buff, "*** Error: user #%d does not exist yet. ***\n", target_id);
                     write(connfd, send_buff, strlen(send_buff)); 
                     return;
                 }
+
+                if(fifo_lock_get(get_my_client_id(), target_id)) {
+                    sprintf(send_buff, "*** Error: the pipe #%d->#%d already exists. ***\n", get_my_client_id(), target_id);
+                    write(connfd, send_buff, strlen(send_buff)); 
+                    return;
+                }
+
                 if( fork_and_exec_fifo_out(connfd, argv_s, target_id) == EXIT_FAILURE ) {
                     return;
                 } else {
+                    fifo_lock_set(get_my_client_id(), target_id, TRUE);
                     broadcast_cmd_fifo_out(target_id, original_read_buff);
                 }
 

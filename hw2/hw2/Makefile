@@ -1,5 +1,5 @@
 CC=gcc
-OBJ=main.o pipe.o fork_exec.o client.o broadcast.o client_name.o fifo.o
+OBJ=main.o pipe.o fork_exec.o client.o broadcast.o client_name.o fifo.o fifo_lock.o
 CFLAG=-g -Wall
 
 PORT=33917
