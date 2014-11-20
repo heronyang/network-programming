@@ -493,8 +493,9 @@ void command_handler(int connfd) {
     }
 
     if(argc == 0)   return;
-    fork_and_exec_last(connfd, argv);
-    pipe_shift();
+    if(fork_and_exec_last(connfd, argv) == EXIT_SUCCESS) {
+        pipe_shift();
+    }
 
 }
 

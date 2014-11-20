@@ -13,6 +13,8 @@ main: $(OBJ)
 	$(CC) $(CFLAG) -c -o $@ $<
 
 run_server:
+	rm -r ras
+	cp -r ras_template ras
 	@./main
 
 run_client:
