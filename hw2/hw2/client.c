@@ -137,7 +137,19 @@ void cmd_who(int connfd) {
 
 }
 
-void cmd_name(char *name) {
+void cmd_name(int connfd, char *name) {
+
+    // if already exisits
+    int i;
+    for( i=0 ; i<CLIENT_MAX_NUM ; i++ ) {
+        if(strcmp(getname(i), name) == 0) {
+
+            sprintf(send_buff, "*** User '%s' already exists. ***\n", name);
+            write(connfd, send_buff, strlen(send_buff)); 
+
+            return;
+        }
+    }
 
     Client *shm;
     if ((shm = shmat(g_shmid, NULL, 0)) == (Client *) -1) {
@@ -145,7 +157,7 @@ void cmd_name(char *name) {
         exit(1);
     }
 
-    int pid = getpid(), i;
+    int pid = getpid();
     for( i=0 ; i<CLIENT_MAX_NUM ; i++ ) {
 
         if(shm[i].valid && shm[i].pid == pid) {
@@ -216,7 +228,7 @@ int prompt(int connfd) {
         return COMMAND_HANDLED;
     }
     if(strcmp(argv[0], "name") == 0) {
-        cmd_name(argv[1]);
+        cmd_name(connfd, argv[1]);
         return COMMAND_HANDLED;
     }
     if(strcmp(argv[0], "yell") == 0) {

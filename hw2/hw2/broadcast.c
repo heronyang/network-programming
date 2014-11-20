@@ -161,7 +161,7 @@ void broadcast_user_connect(struct sockaddr_in address) {
         exit(1);
     }
 
-    sprintf(msg, " *** User '(no name)' entered from %s/%d. ***\n", inet_ntoa(address.sin_addr), ntohs(address.sin_port));
+    sprintf(msg, "*** User '(no name)' entered from %s/%d. ***\n", inet_ntoa(address.sin_addr), ntohs(address.sin_port));
     shmdt(msg);
 
     broadcast_sender_all();
