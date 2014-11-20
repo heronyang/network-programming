@@ -274,15 +274,16 @@ int main(int argc, char *argv[]) {
             // client: handle
             client_handler(connfd);
 
+
+            fifo_close();
+            broadcast_user_disconnect();
+            shm_client_delete(g_shmid);
+            fprintf(stderr, "closed connection: %d\n", connfd);
+
             // client: close
             if(close(connfd) < 0) {
                 perror("close");
             }
-
-            broadcast_user_disconnect();
-            shm_client_delete(g_shmid);
-            fifo_close();
-            fprintf(stderr, "closed connection: %d\n", connfd);
 
             exit(EXIT_SUCCESS);
 

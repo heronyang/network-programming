@@ -1,86 +1,87 @@
 
 login1
-1| *** User '(no name)' entered from 127.0.0.1/51511. ***
 1| ****************************************
 1| ** Welcome to the information server. **
 1| ****************************************
+1| *** User '(no name)' entered from 127.0.0.1/51571. ***
 1| % 
 
 login2
-1| *** User '(no name)' entered from 127.0.0.1/51512. ***
-2| *** User '(no name)' entered from 127.0.0.1/51512. ***
+1| *** User '(no name)' entered from 127.0.0.1/51572. ***
 2| ****************************************
 2| ** Welcome to the information server. **
 2| ****************************************
+2| *** User '(no name)' entered from 127.0.0.1/51572. ***
 2| % 
 
 login3
-1| *** User '(no name)' entered from 127.0.0.1/51513. ***
-2| *** User '(no name)' entered from 127.0.0.1/51513. ***
-3| *** User '(no name)' entered from 127.0.0.1/51513. ***
+1| *** User '(no name)' entered from 127.0.0.1/51573. ***
+2| *** User '(no name)' entered from 127.0.0.1/51573. ***
 3| ****************************************
 3| ** Welcome to the information server. **
 3| ****************************************
+3| *** User '(no name)' entered from 127.0.0.1/51573. ***
 3| % 
 
 1 % name ApplePie
-1| *** User from 127.0.0.1/51511 is named 'ApplePie'. ***
+1| *** User from 127.0.0.1/51571 is named 'ApplePie'. ***
 1| % 
-2| *** User from 127.0.0.1/51511 is named 'ApplePie'. ***
-3| *** User from 127.0.0.1/51511 is named 'ApplePie'. ***
+2| *** User from 127.0.0.1/51571 is named 'ApplePie'. ***
+3| *** User from 127.0.0.1/51571 is named 'ApplePie'. ***
 
 2 % name BakedCake
-1| *** User from 127.0.0.1/51512 is named 'BakedCake'. ***
-2| *** User from 127.0.0.1/51512 is named 'BakedCake'. ***
+1| *** User from 127.0.0.1/51572 is named 'BakedCake'. ***
+2| *** User from 127.0.0.1/51572 is named 'BakedCake'. ***
 2| % 
-3| *** User from 127.0.0.1/51512 is named 'BakedCake'. ***
+3| *** User from 127.0.0.1/51572 is named 'BakedCake'. ***
 
 2 % who
 2| <ID>	<nickname>	<IP/port>	<indicate me>
-2| 1	ApplePie	127.0.0.1/51511
-2| 2	BakedCake	127.0.0.1/51512	<- me
-2| 3	user3	127.0.0.1/51510
-2| 4	(no name)	127.0.0.1/51513
+2| 1	ApplePie	127.0.0.1/51571
+2| 2	BakedCake	127.0.0.1/51572	<-me
+2| 3	user3	127.0.0.1/51570
+2| 4	(no name)	127.0.0.1/51573
 2| % 
 
 logout1
+1| *** User 'ApplePie' left. ***
 2| *** User 'ApplePie' left. ***
 3| *** User 'ApplePie' left. ***
 
 3 % name Cream
-2| *** User from 127.0.0.1/51513 is named 'Cream'. ***
-3| *** User from 127.0.0.1/51513 is named 'Cream'. ***
+2| *** User from 127.0.0.1/51573 is named 'Cream'. ***
+3| *** User from 127.0.0.1/51573 is named 'Cream'. ***
 3| % 
 
 login4
-2| *** User '(no name)' entered from 127.0.0.1/51514. ***
-3| *** User '(no name)' entered from 127.0.0.1/51514. ***
-4| *** User '(no name)' entered from 127.0.0.1/51514. ***
+2| *** User '(no name)' entered from 127.0.0.1/51574. ***
+3| *** User '(no name)' entered from 127.0.0.1/51574. ***
 4| ****************************************
 4| ** Welcome to the information server. **
 4| ****************************************
+4| *** User '(no name)' entered from 127.0.0.1/51574. ***
 4| % 
 
 3 % who
 3| <ID>	<nickname>	<IP/port>	<indicate me>
-3| 1	(no name)	127.0.0.1/51514
-3| 2	BakedCake	127.0.0.1/51512
-3| 3	user3	127.0.0.1/51510
-3| 4	Cream	127.0.0.1/51513	<- me
+3| 1	(no name)	127.0.0.1/51574
+3| 2	BakedCake	127.0.0.1/51572
+3| 3	user3	127.0.0.1/51570
+3| 4	Cream	127.0.0.1/51573	<-me
 3| % 
 
 4 % name Donut
-2| *** User from 127.0.0.1/51514 is named 'Donut'. ***
-3| *** User from 127.0.0.1/51514 is named 'Donut'. ***
-4| *** User from 127.0.0.1/51514 is named 'Donut'. ***
+2| *** User from 127.0.0.1/51574 is named 'Donut'. ***
+3| *** User from 127.0.0.1/51574 is named 'Donut'. ***
+4| *** User from 127.0.0.1/51574 is named 'Donut'. ***
 4| % 
 
 2 % who
 2| <ID>	<nickname>	<IP/port>	<indicate me>
-2| 1	Donut	127.0.0.1/51514
-2| 2	BakedCake	127.0.0.1/51512	<- me
-2| 3	user3	127.0.0.1/51510
-2| 4	Cream	127.0.0.1/51513
+2| 1	Donut	127.0.0.1/51574
+2| 2	BakedCake	127.0.0.1/51572	<-me
+2| 3	user3	127.0.0.1/51570
+2| 4	Cream	127.0.0.1/51573
 2| % 
 
 2 % yell I am hungry.
@@ -124,12 +125,15 @@ login4
 4| % 
 
 logout2
+2| *** User 'BakedCake' left. ***
 3| *** User 'BakedCake' left. ***
 4| *** User 'BakedCake' left. ***
 
 logout3
+3| *** User 'Cream' left. ***
 4| *** User 'Cream' left. ***
 
 logout4
+4| *** User 'Donut' left. ***
 
 exit

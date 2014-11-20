@@ -123,7 +123,7 @@ void cmd_who(int connfd) {
         sprintf(t_s, "%d\t%s\t%s/%d", i+1, getname(i), shm[i].ip, shm[i].port);
 
         if(shm[i].pid == pid) {
-            strcat(t_s, "\t<- me\n");
+            strcat(t_s, "\t<-me\n");
         } else {
             strcat(t_s, "\n");
         }

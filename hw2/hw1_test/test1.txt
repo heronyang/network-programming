@@ -1,0 +1,11 @@
+printenv PATH
+ls
+setenv PATH .
+printenv PATH
+ls
+setenv PATH bin
+setenv LANG en_US
+printenv LANG
+ls bin
+date
+exit
