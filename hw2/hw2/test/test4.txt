@@ -8,7 +8,7 @@ login4
 4:name HotCakes
 1:number test.html >2
 1:cat test.html >3
-1:cat test.html | cat >3
+1:cat test.html >3
 1:cat test.html >6
 2:number <1
 2:cat test.html >3

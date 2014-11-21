@@ -3,15 +3,15 @@ login1
 1| ****************************************
 1| ** Welcome to the information server. **
 1| ****************************************
-1| *** User '(no name)' entered from 127.0.0.1/51700. ***
+1| *** User '(no name)' entered from 127.0.0.1/51795. ***
 1| % 
 
 login2
-1| *** User '(no name)' entered from 127.0.0.1/51701. ***
+1| *** User '(no name)' entered from 127.0.0.1/51796. ***
 2| ****************************************
 2| ** Welcome to the information server. **
 2| ****************************************
-2| *** User '(no name)' entered from 127.0.0.1/51701. ***
+2| *** User '(no name)' entered from 127.0.0.1/51796. ***
 2| % 
 
 1 % printenv PATH
@@ -41,7 +41,8 @@ login2
 
 2 % cat
 2|    1 bin
-2|    2 test.html
+2|    2 ls.txt
+2|    3 test.html
 2| <!test.html>
 2| <TITLE>Test<TITLE>
 2| <BODY>This is a <b>test</b> program
