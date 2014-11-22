@@ -1,12 +1,12 @@
 CC=g++
 
 all: $(patsubst %.cpp, %, $(wildcard *.cpp))
-	cp /bin/cat ../ras/bin/
-	cp /bin/ls ../ras/bin/
-	cp noop ../ras/bin/
-	cp number ../ras/bin/
-	cp removetag ../ras/bin/
-	cp removetag0 ../ras/bin/
+	cp /bin/cat ../ras_template/bin/
+	cp /bin/ls ../ras_template/bin/
+	cp noop ../ras_template/bin/
+	cp number ../ras_template/bin/
+	cp removetag ../ras_template/bin/
+	cp removetag0 ../ras_template/bin/
 
 clean:
 	rm noop number removetag removetag0
