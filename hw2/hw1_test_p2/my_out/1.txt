@@ -1,0 +1,30 @@
+****************************************
+** Welcome to the information server. **
+****************************************
+*** User '(no name)' entered from 127.0.0.1/51684. ***
+% printenv PATH
+PATH=bin:.
+% ls
+bin
+ls.txt
+test.html
+% setenv PATH .
+% printenv PATH
+PATH=.
+% ls
+Unknown command: [ls].
+% setenv PATH bin
+% setenv LANG en_US
+% printenv LANG
+LANG=en_US
+% ls bin
+cat
+ls
+noop
+number
+removetag
+removetag0
+% date
+Unknown command: [date].
+% exit
+*** User '(no name)' left. ***
