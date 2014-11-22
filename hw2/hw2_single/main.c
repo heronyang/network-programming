@@ -26,6 +26,7 @@
 #include "client.h"
 #include "clients.h"
 #include "pipe.h"
+#include "env.h"
 
 /*
  * Main
@@ -51,6 +52,9 @@ int main(int argc, char *argv[]) {
 
     /* client: init */
     clients_init();
+
+    /* env: init */
+    env_init();
 
     /* FIFO: init */
     /*
@@ -140,14 +144,20 @@ int main(int argc, char *argv[]) {
             if( !FD_ISSET(cs, &fds) )   continue;
 
             // client: handle
+            env_set(i);
             if( client_handler(cs) == CLIENT_END ) {
 
                 //fifo_close();
                 //broadcast_user_disconnect();
 
+                env_clean(i);
                 clients_close(cs);
 
                 fprintf(stderr, "closed connection: %d\n", cs);
+
+            } else {    // continue
+
+                env_save(i);
 
             }
         

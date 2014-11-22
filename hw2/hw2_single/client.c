@@ -18,6 +18,7 @@
 #include "clients.h"
 #include "mytype.h"
 #include "variable.h"
+#include "env.h"
 //#include "client_name.h"
 //#include "broadcast.h"
 //#include "fifo_lock.h"
@@ -71,6 +72,7 @@ void setenv_helper(int connfd) {
         return;
     }
     setenv(argv[1], argv[2], TRUE);
+    env_save(connfd);
 }
 
 void printenv_helper(int connfd) {
@@ -303,16 +305,6 @@ char **extract_command(int len) {
 
 }
 
-// a whole line as input (pipe may be included)
-void init_env() {
-
-    // change to working directory
-    chdir("./ras");
-
-    // only support custom bin/
-    setenv("PATH", "bin:.", TRUE);
-
-}
 void command_handler(int connfd) {
 
     int i;
@@ -514,15 +506,14 @@ void command_handler(int connfd) {
 // handle one socket connection
 int client_handler(int connfd) {
 
-    init_env();
-
     int r = prompt(connfd);
 
-    if(r == COMMAND_HANDLED)    return CLIENT_CONT;
     if(!r)  return CLIENT_END;
 
-    command_handler(connfd);
+    if(r != COMMAND_HANDLED) {
+        command_handler(connfd);
+    }
     print_prompt_sign(connfd);
-
     return CLIENT_CONT;
+
 }

@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include <sys/types.h>
 #include <unistd.h>
+#include <errno.h>
 
 #include "constant.h"
 #include "pipe.h"
@@ -15,7 +16,9 @@ int *old_pipe[CLIENT_MAX_NUM];
 int *pipe_create(int client_id, int p_n) {
 
     int *fd = malloc(sizeof(int) * 2);
-    if(pipe(fd) < 0)    fprintf(stderr, "pipe failed\n");
+    if(pipe(fd) < 0) {
+        perror("pipe");
+    }
 
     if(pipe_map[client_id][p_n])    old_pipe[client_id] = pipe_map[client_id][p_n];
     else                            old_pipe[client_id] = NULL;
