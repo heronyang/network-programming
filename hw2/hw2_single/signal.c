@@ -1,6 +1,9 @@
 #include <stdlib.h>
 #include <signal.h>
 #include <stdio.h>  /* needed for printf() */
+#include <sys/wait.h>
+
+#include "signal.h"
 
 int client_count;
 

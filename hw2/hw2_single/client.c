@@ -198,15 +198,20 @@ void cmd_tell(int connfd, int target_id, char *buff) {
 }
 */
 
+void print_prompt_sign(int connfd) {
+
+    memset(send_buff, 0, SIZE_SEND_BUFF); 
+    snprintf(send_buff, SIZE_SEND_BUFF, "%% ");
+    write(connfd, send_buff, strlen(send_buff)); 
+
+}
+
 int prompt(int connfd) {
 
     int r = 0;
 
-    memset(send_buff, 0, SIZE_SEND_BUFF); 
     memset(read_buff, 0, SIZE_READ_BUFF); 
 
-    snprintf(send_buff, SIZE_SEND_BUFF, "%% ");
-    write(connfd, send_buff, strlen(send_buff)); 
     // r = read(connfd, read_buff, SIZE_READ_BUFF);
     r = read_helper(connfd, read_buff);
     if(r == 1)  return COMMAND_HANDLED;
@@ -223,6 +228,7 @@ int prompt(int connfd) {
         printenv_helper(connfd);
         return COMMAND_HANDLED;
     }
+    /*
     if(strcmp(argv[0], "who") == 0) {
         cmd_who(connfd);
         return COMMAND_HANDLED;
@@ -239,6 +245,7 @@ int prompt(int connfd) {
         cmd_tell(connfd, atoi(argv[1])-1, original_read_buff);
         return COMMAND_HANDLED;
     }
+    */
 
     return r;
 
@@ -510,7 +517,9 @@ int client_handler(int connfd) {
 
     if(r == COMMAND_HANDLED)    return CLIENT_CONT;
     if(!r)  return CLIENT_END;
+
     command_handler(connfd);
+    print_prompt_sign(connfd);
 
+    return CLIENT_CONT;
 }
-

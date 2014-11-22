@@ -1,7 +1,18 @@
-/* Globals */
-int client_count;
+#include <sys/socket.h>
+#include <netinet/in.h>
+#include <arpa/inet.h>
+#include <string.h>
+#include <errno.h>
+#include <stdio.h>
+#include <unistd.h>
+
+#include "variable.h"
+#include "constant.h"
+
+#include "clients.h"
 
 /* External Globals */
+int client_count;
 Client clients[CLIENT_MAX_NUM];
 
 /*
@@ -46,28 +57,30 @@ void clients_close(int socket) {
 
     client_count --;
 
-    Client c = clients_get_from_socket(socket);
-    if(close(c.socket) < 0) {
+    Client *c = clients_get_from_socket(socket);
+    if(close(c->socket) < 0) {
         perror("close");
     }
-    c.valid = FALSE;
+    c->valid = FALSE;
 
 }
 
-Client clients_get(int client_id) {
+Client *clients_get(int client_id) {
 
-    return clients[client_id];
+    if( client_id >=0 && client_id < CLIENT_MAX_NUM )   return &clients[client_id];
+    return NULL;
 
 }
 
-int clients_get_from_socket(int socket) {
+Client *clients_get_from_socket(int socket) {
 
     int i;
     for( i=0 ; i<CLIENT_MAX_NUM ; i++ ) {
 
-        if(clients[i].valid == TRUE && clients[i].socket == socket) return i;
+        if(clients[i].valid == TRUE && clients[i].socket == socket) return &clients[i];
 
     }
 
-    return 0;
+    return NULL;
+
 }

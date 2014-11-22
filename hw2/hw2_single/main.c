@@ -21,7 +21,8 @@
 
 #include "constant.h"
 #include "mytype.h"
-#include "variables.h"
+#include "variable.h"
+#include "signal.h"
 #include "client.h"
 #include "clients.h"
 
@@ -37,7 +38,7 @@ int main(int argc, char *argv[]) {
     int max_fd, activity, cs, i;
     struct sockaddr_in serv_addr; 
     fd_set fds;
-    Client c;
+    Client *c;
 
     /* =============================================== */
     /* init */
@@ -89,23 +90,23 @@ int main(int argc, char *argv[]) {
         FD_ZERO(&fds);
 
         // add current socket to fds
-        FD_SET(fd, &fds);
+        FD_SET(listenfd, &fds);
         max_fd = listenfd;
 
         // add other client sockets to fds
         for( i=0 ; i<CLIENT_MAX_NUM ; i++ ) {
 
             c = clients_get(i);
-            cs = c.socket;
+            cs = c->socket;
 
-            if( cs>0 )          FD_SET(cs, %fds);
+            if( cs>0 )          FD_SET(cs, &fds);
             if( cs > max_fd )   max_fd = cs;
 
         }
 
         // select
         activity = select( max_fd+1, &fds, NULL, NULL, NULL );
-        if( (activity<0) && (errno!=EINTER) ) {
+        if( (activity<0) && (errno!=EINTR) ) {
             perror("select error");
         }
 
@@ -121,12 +122,14 @@ int main(int argc, char *argv[]) {
             welcome_msg(connfd);
             //broadcast_user_connect(serv_addr);
 
+            print_prompt_sign(connfd);
+
         }
 
         for( i=0 ; i<CLIENT_MAX_NUM ; i++ ) {
 
             c = clients_get(i);
-            cs = c.socket;
+            cs = c->socket;
 
             if( !FD_ISSET(cs, &fds) )   continue;
 
@@ -135,7 +138,7 @@ int main(int argc, char *argv[]) {
 
                 //fifo_close();
                 //broadcast_user_disconnect();
-                clients_close();
+                clients_close(connfd);
 
                 fprintf(stderr, "closed connection: %d\n", connfd);
 
