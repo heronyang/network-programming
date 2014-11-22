@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#include <stdio.h>
 
 #include "constant.h"
 // NOTICE: now is only snapshoting for PATH variable

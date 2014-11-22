@@ -3,62 +3,62 @@ login1
 1| ****************************************
 1| ** Welcome to the information server. **
 1| ****************************************
-1| *** User '(no name)' entered from 127.0.0.1/51804. ***
+1| *** User '(no name)' entered from 127.0.0.1/52450. ***
 1| % 
 
 login2
-1| *** User '(no name)' entered from 127.0.0.1/51805. ***
+1| *** User '(no name)' entered from 127.0.0.1/52451. ***
 2| ****************************************
 2| ** Welcome to the information server. **
 2| ****************************************
-2| *** User '(no name)' entered from 127.0.0.1/51805. ***
+2| *** User '(no name)' entered from 127.0.0.1/52451. ***
 2| % 
 
 login3
-1| *** User '(no name)' entered from 127.0.0.1/51806. ***
-2| *** User '(no name)' entered from 127.0.0.1/51806. ***
+1| *** User '(no name)' entered from 127.0.0.1/52452. ***
+2| *** User '(no name)' entered from 127.0.0.1/52452. ***
 3| ****************************************
 3| ** Welcome to the information server. **
 3| ****************************************
-3| *** User '(no name)' entered from 127.0.0.1/51806. ***
+3| *** User '(no name)' entered from 127.0.0.1/52452. ***
 3| % 
 
 login4
-1| *** User '(no name)' entered from 127.0.0.1/51807. ***
-2| *** User '(no name)' entered from 127.0.0.1/51807. ***
-3| *** User '(no name)' entered from 127.0.0.1/51807. ***
+1| *** User '(no name)' entered from 127.0.0.1/52453. ***
+2| *** User '(no name)' entered from 127.0.0.1/52453. ***
+3| *** User '(no name)' entered from 127.0.0.1/52453. ***
 4| ****************************************
 4| ** Welcome to the information server. **
 4| ****************************************
-4| *** User '(no name)' entered from 127.0.0.1/51807. ***
+4| *** User '(no name)' entered from 127.0.0.1/52453. ***
 4| % 
 
 1 % name Egglet
-1| *** User from 127.0.0.1/51804 is named 'Egglet'. ***
+1| *** User from 127.0.0.1/52450 is named 'Egglet'. ***
 1| % 
-2| *** User from 127.0.0.1/51804 is named 'Egglet'. ***
-3| *** User from 127.0.0.1/51804 is named 'Egglet'. ***
-4| *** User from 127.0.0.1/51804 is named 'Egglet'. ***
+2| *** User from 127.0.0.1/52450 is named 'Egglet'. ***
+3| *** User from 127.0.0.1/52450 is named 'Egglet'. ***
+4| *** User from 127.0.0.1/52450 is named 'Egglet'. ***
 
 2 % name FruitBuffet
-1| *** User from 127.0.0.1/51805 is named 'FruitBuffet'. ***
-2| *** User from 127.0.0.1/51805 is named 'FruitBuffet'. ***
+1| *** User from 127.0.0.1/52451 is named 'FruitBuffet'. ***
+2| *** User from 127.0.0.1/52451 is named 'FruitBuffet'. ***
 2| % 
-3| *** User from 127.0.0.1/51805 is named 'FruitBuffet'. ***
-4| *** User from 127.0.0.1/51805 is named 'FruitBuffet'. ***
+3| *** User from 127.0.0.1/52451 is named 'FruitBuffet'. ***
+4| *** User from 127.0.0.1/52451 is named 'FruitBuffet'. ***
 
 3 % name GingerCookies
-1| *** User from 127.0.0.1/51806 is named 'GingerCookies'. ***
-2| *** User from 127.0.0.1/51806 is named 'GingerCookies'. ***
-3| *** User from 127.0.0.1/51806 is named 'GingerCookies'. ***
+1| *** User from 127.0.0.1/52452 is named 'GingerCookies'. ***
+2| *** User from 127.0.0.1/52452 is named 'GingerCookies'. ***
+3| *** User from 127.0.0.1/52452 is named 'GingerCookies'. ***
 3| % 
-4| *** User from 127.0.0.1/51806 is named 'GingerCookies'. ***
+4| *** User from 127.0.0.1/52452 is named 'GingerCookies'. ***
 
 4 % name HotCakes
-1| *** User from 127.0.0.1/51807 is named 'HotCakes'. ***
-2| *** User from 127.0.0.1/51807 is named 'HotCakes'. ***
-3| *** User from 127.0.0.1/51807 is named 'HotCakes'. ***
-4| *** User from 127.0.0.1/51807 is named 'HotCakes'. ***
+1| *** User from 127.0.0.1/52453 is named 'HotCakes'. ***
+2| *** User from 127.0.0.1/52453 is named 'HotCakes'. ***
+3| *** User from 127.0.0.1/52453 is named 'HotCakes'. ***
+4| *** User from 127.0.0.1/52453 is named 'HotCakes'. ***
 4| % 
 
 1 % number test.html >2
@@ -180,28 +180,28 @@ logout1
 4| *** User 'Egglet' left. ***
 
 login5
-2| *** User '(no name)' entered from 127.0.0.1/51810. ***
-3| *** User '(no name)' entered from 127.0.0.1/51810. ***
-4| *** User '(no name)' entered from 127.0.0.1/51810. ***
+2| *** User '(no name)' entered from 127.0.0.1/52456. ***
+3| *** User '(no name)' entered from 127.0.0.1/52456. ***
+4| *** User '(no name)' entered from 127.0.0.1/52456. ***
 5| ****************************************
 5| ** Welcome to the information server. **
 5| ****************************************
-5| *** User '(no name)' entered from 127.0.0.1/51810. ***
+5| *** User '(no name)' entered from 127.0.0.1/52456. ***
 5| % 
 
 5 % name IceCream
-2| *** User from 127.0.0.1/51810 is named 'IceCream'. ***
-3| *** User from 127.0.0.1/51810 is named 'IceCream'. ***
-4| *** User from 127.0.0.1/51810 is named 'IceCream'. ***
-5| *** User from 127.0.0.1/51810 is named 'IceCream'. ***
+2| *** User from 127.0.0.1/52456 is named 'IceCream'. ***
+3| *** User from 127.0.0.1/52456 is named 'IceCream'. ***
+4| *** User from 127.0.0.1/52456 is named 'IceCream'. ***
+5| *** User from 127.0.0.1/52456 is named 'IceCream'. ***
 5| % 
 
 5 % who
 5| <ID>	<nickname>	<IP/port>	<indicate me>
-5| 1	IceCream	127.0.0.1/51810	<-me
-5| 2	FruitBuffet	127.0.0.1/51805
-5| 3	GingerCookies	127.0.0.1/51806
-5| 4	HotCakes	127.0.0.1/51807
+5| 1	IceCream	127.0.0.1/52456	<-me
+5| 2	FruitBuffet	127.0.0.1/52451
+5| 3	GingerCookies	127.0.0.1/52452
+5| 4	HotCakes	127.0.0.1/52453
 5| % 
 
 5 % cat <4

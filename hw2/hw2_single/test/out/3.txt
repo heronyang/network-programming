@@ -3,43 +3,43 @@ login1
 1| ****************************************
 1| ** Welcome to the information server. **
 1| ****************************************
-1| *** User '(no name)' entered from 127.0.0.1/51800. ***
+1| *** User '(no name)' entered from 127.0.0.1/52446. ***
 1| % 
 
 login2
-1| *** User '(no name)' entered from 127.0.0.1/51801. ***
+1| *** User '(no name)' entered from 127.0.0.1/52447. ***
 2| ****************************************
 2| ** Welcome to the information server. **
 2| ****************************************
-2| *** User '(no name)' entered from 127.0.0.1/51801. ***
+2| *** User '(no name)' entered from 127.0.0.1/52447. ***
 2| % 
 
 login3
-1| *** User '(no name)' entered from 127.0.0.1/51802. ***
-2| *** User '(no name)' entered from 127.0.0.1/51802. ***
+1| *** User '(no name)' entered from 127.0.0.1/52448. ***
+2| *** User '(no name)' entered from 127.0.0.1/52448. ***
 3| ****************************************
 3| ** Welcome to the information server. **
 3| ****************************************
-3| *** User '(no name)' entered from 127.0.0.1/51802. ***
+3| *** User '(no name)' entered from 127.0.0.1/52448. ***
 3| % 
 
 1 % name ApplePie
-1| *** User from 127.0.0.1/51800 is named 'ApplePie'. ***
+1| *** User from 127.0.0.1/52446 is named 'ApplePie'. ***
 1| % 
-2| *** User from 127.0.0.1/51800 is named 'ApplePie'. ***
-3| *** User from 127.0.0.1/51800 is named 'ApplePie'. ***
+2| *** User from 127.0.0.1/52446 is named 'ApplePie'. ***
+3| *** User from 127.0.0.1/52446 is named 'ApplePie'. ***
 
 2 % name BakedCake
-1| *** User from 127.0.0.1/51801 is named 'BakedCake'. ***
-2| *** User from 127.0.0.1/51801 is named 'BakedCake'. ***
+1| *** User from 127.0.0.1/52447 is named 'BakedCake'. ***
+2| *** User from 127.0.0.1/52447 is named 'BakedCake'. ***
 2| % 
-3| *** User from 127.0.0.1/51801 is named 'BakedCake'. ***
+3| *** User from 127.0.0.1/52447 is named 'BakedCake'. ***
 
 2 % who
 2| <ID>	<nickname>	<IP/port>	<indicate me>
-2| 1	ApplePie	127.0.0.1/51800
-2| 2	BakedCake	127.0.0.1/51801	<-me
-2| 3	(no name)	127.0.0.1/51802
+2| 1	ApplePie	127.0.0.1/52446
+2| 2	BakedCake	127.0.0.1/52447	<-me
+2| 3	(no name)	127.0.0.1/52448
 2| % 
 
 logout1
@@ -48,37 +48,37 @@ logout1
 3| *** User 'ApplePie' left. ***
 
 3 % name Cream
-2| *** User from 127.0.0.1/51802 is named 'Cream'. ***
-3| *** User from 127.0.0.1/51802 is named 'Cream'. ***
+2| *** User from 127.0.0.1/52448 is named 'Cream'. ***
+3| *** User from 127.0.0.1/52448 is named 'Cream'. ***
 3| % 
 
 login4
-2| *** User '(no name)' entered from 127.0.0.1/51803. ***
-3| *** User '(no name)' entered from 127.0.0.1/51803. ***
+2| *** User '(no name)' entered from 127.0.0.1/52449. ***
+3| *** User '(no name)' entered from 127.0.0.1/52449. ***
 4| ****************************************
 4| ** Welcome to the information server. **
 4| ****************************************
-4| *** User '(no name)' entered from 127.0.0.1/51803. ***
+4| *** User '(no name)' entered from 127.0.0.1/52449. ***
 4| % 
 
 3 % who
 3| <ID>	<nickname>	<IP/port>	<indicate me>
-3| 1	(no name)	127.0.0.1/51803
-3| 2	BakedCake	127.0.0.1/51801
-3| 3	Cream	127.0.0.1/51802	<-me
+3| 1	(no name)	127.0.0.1/52449
+3| 2	BakedCake	127.0.0.1/52447
+3| 3	Cream	127.0.0.1/52448	<-me
 3| % 
 
 4 % name Donut
-2| *** User from 127.0.0.1/51803 is named 'Donut'. ***
-3| *** User from 127.0.0.1/51803 is named 'Donut'. ***
-4| *** User from 127.0.0.1/51803 is named 'Donut'. ***
+2| *** User from 127.0.0.1/52449 is named 'Donut'. ***
+3| *** User from 127.0.0.1/52449 is named 'Donut'. ***
+4| *** User from 127.0.0.1/52449 is named 'Donut'. ***
 4| % 
 
 2 % who
 2| <ID>	<nickname>	<IP/port>	<indicate me>
-2| 1	Donut	127.0.0.1/51803
-2| 2	BakedCake	127.0.0.1/51801	<-me
-2| 3	Cream	127.0.0.1/51802
+2| 1	Donut	127.0.0.1/52449
+2| 2	BakedCake	127.0.0.1/52447	<-me
+2| 3	Cream	127.0.0.1/52448
 2| % 
 
 2 % yell I am hungry.

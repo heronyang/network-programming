@@ -3,37 +3,37 @@ login1
 1| ****************************************
 1| ** Welcome to the information server. **
 1| ****************************************
-1| *** User '(no name)' entered from 127.0.0.1/51797. ***
+1| *** User '(no name)' entered from 127.0.0.1/52427. ***
 1| % 
 
 1 % who
 1| <ID>	<nickname>	<IP/port>	<indicate me>
-1| 1	(no name)	127.0.0.1/51797	<-me
+1| 1	(no name)	127.0.0.1/52427	<-me
 1| % 
 
 login2
-1| *** User '(no name)' entered from 127.0.0.1/51798. ***
+1| *** User '(no name)' entered from 127.0.0.1/52428. ***
 2| ****************************************
 2| ** Welcome to the information server. **
 2| ****************************************
-2| *** User '(no name)' entered from 127.0.0.1/51798. ***
+2| *** User '(no name)' entered from 127.0.0.1/52428. ***
 2| % 
 
 2 % name user2
-1| *** User from 127.0.0.1/51798 is named 'user2'. ***
-2| *** User from 127.0.0.1/51798 is named 'user2'. ***
+1| *** User from 127.0.0.1/52428 is named 'user2'. ***
+2| *** User from 127.0.0.1/52428 is named 'user2'. ***
 2| % 
 
 2 % who
 2| <ID>	<nickname>	<IP/port>	<indicate me>
-2| 1	(no name)	127.0.0.1/51797
-2| 2	user2	127.0.0.1/51798	<-me
+2| 1	(no name)	127.0.0.1/52427
+2| 2	user2	127.0.0.1/52428	<-me
 2| % 
 
 1 % who
 1| <ID>	<nickname>	<IP/port>	<indicate me>
-1| 1	(no name)	127.0.0.1/51797	<-me
-1| 2	user2	127.0.0.1/51798
+1| 1	(no name)	127.0.0.1/52427	<-me
+1| 2	user2	127.0.0.1/52428
 1| % 
 
 1 % name user2
@@ -41,55 +41,55 @@ login2
 1| % 
 
 1 % name user11
-1| *** User from 127.0.0.1/51797 is named 'user11'. ***
+1| *** User from 127.0.0.1/52427 is named 'user11'. ***
 1| % 
-2| *** User from 127.0.0.1/51797 is named 'user11'. ***
+2| *** User from 127.0.0.1/52427 is named 'user11'. ***
 
 1 % name user111
-1| *** User from 127.0.0.1/51797 is named 'user111'. ***
+1| *** User from 127.0.0.1/52427 is named 'user111'. ***
 1| % 
-2| *** User from 127.0.0.1/51797 is named 'user111'. ***
+2| *** User from 127.0.0.1/52427 is named 'user111'. ***
 
 login3
-1| *** User '(no name)' entered from 127.0.0.1/51799. ***
-2| *** User '(no name)' entered from 127.0.0.1/51799. ***
+1| *** User '(no name)' entered from 127.0.0.1/52429. ***
+2| *** User '(no name)' entered from 127.0.0.1/52429. ***
 3| ****************************************
 3| ** Welcome to the information server. **
 3| ****************************************
-3| *** User '(no name)' entered from 127.0.0.1/51799. ***
+3| *** User '(no name)' entered from 127.0.0.1/52429. ***
 3| % 
 
 3 % who
 3| <ID>	<nickname>	<IP/port>	<indicate me>
-3| 1	user111	127.0.0.1/51797
-3| 2	user2	127.0.0.1/51798
-3| 3	(no name)	127.0.0.1/51799	<-me
+3| 1	user111	127.0.0.1/52427
+3| 2	user2	127.0.0.1/52428
+3| 3	(no name)	127.0.0.1/52429	<-me
 3| % 
 
 3 % name user11
-1| *** User from 127.0.0.1/51799 is named 'user11'. ***
-2| *** User from 127.0.0.1/51799 is named 'user11'. ***
-3| *** User from 127.0.0.1/51799 is named 'user11'. ***
+1| *** User from 127.0.0.1/52429 is named 'user11'. ***
+2| *** User from 127.0.0.1/52429 is named 'user11'. ***
+3| *** User from 127.0.0.1/52429 is named 'user11'. ***
 3| % 
 
 3 % who
 3| <ID>	<nickname>	<IP/port>	<indicate me>
-3| 1	user111	127.0.0.1/51797
-3| 2	user2	127.0.0.1/51798
-3| 3	user11	127.0.0.1/51799	<-me
+3| 1	user111	127.0.0.1/52427
+3| 2	user2	127.0.0.1/52428
+3| 3	user11	127.0.0.1/52429	<-me
 3| % 
 
 3 % name user3
-1| *** User from 127.0.0.1/51799 is named 'user3'. ***
-2| *** User from 127.0.0.1/51799 is named 'user3'. ***
-3| *** User from 127.0.0.1/51799 is named 'user3'. ***
+1| *** User from 127.0.0.1/52429 is named 'user3'. ***
+2| *** User from 127.0.0.1/52429 is named 'user3'. ***
+3| *** User from 127.0.0.1/52429 is named 'user3'. ***
 3| % 
 
 3 % who
 3| <ID>	<nickname>	<IP/port>	<indicate me>
-3| 1	user111	127.0.0.1/51797
-3| 2	user2	127.0.0.1/51798
-3| 3	user3	127.0.0.1/51799	<-me
+3| 1	user111	127.0.0.1/52427
+3| 2	user2	127.0.0.1/52428
+3| 3	user3	127.0.0.1/52429	<-me
 3| % 
 
 1 % cat test.html |1

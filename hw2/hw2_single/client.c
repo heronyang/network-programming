@@ -72,7 +72,7 @@ void setenv_helper(int connfd) {
         return;
     }
     setenv(argv[1], argv[2], TRUE);
-    env_save(connfd);
+    env_save(clients_get_id_from_socket(connfd));
 }
 
 void printenv_helper(int connfd) {
@@ -163,9 +163,9 @@ void cmd_yell(int connfd, char *buff) {
 
 void cmd_tell(int connfd, int target_id, char *buff) {
 
-    Client *c = clients_get_from_socket(connfd);
+    Client *c = clients_get(target_id);
 
-    int valid = c->valid;
+    char valid = c->valid;
 
     if(!valid) {
 
