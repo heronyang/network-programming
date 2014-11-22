@@ -156,21 +156,15 @@ void cmd_name(int connfd, char *name) {
     broadcast_cmd_name(connfd);
 }
 
-/*
-void cmd_yell(char *buff) {
-    broadcast_cmd_yell(buff);
+void cmd_yell(int connfd, char *buff) {
+    broadcast_cmd_yell(connfd, buff);
 }
 
 void cmd_tell(int connfd, int target_id, char *buff) {
 
-    // check if target_id exist
-    Client *shm;
-    if ((shm = shmat(g_shmid, NULL, 0)) == (Client *) -1) {
-        perror("shmat");
-        exit(1);
-    }
-    int valid = shm[target_id].valid;
-    shmdt(shm);
+    Client *c = clients_get_from_socket(connfd);
+
+    int valid = c->valid;
 
     if(!valid) {
 
@@ -179,12 +173,11 @@ void cmd_tell(int connfd, int target_id, char *buff) {
 
     } else {
 
-        broadcast_cmd_tell(target_id, buff);
+        broadcast_cmd_tell(connfd, target_id, buff);
 
     }
 
 }
-*/
 
 void print_prompt_sign(int connfd) {
 
@@ -224,16 +217,14 @@ int prompt(int connfd) {
         cmd_name(connfd, argv[1]);
         return COMMAND_HANDLED;
     }
-    /*
     if(strcmp(argv[0], "yell") == 0) {
-        cmd_yell(original_read_buff);
+        cmd_yell(connfd, original_read_buff);
         return COMMAND_HANDLED;
     }
     if(strcmp(argv[0], "tell") == 0) {
         cmd_tell(connfd, atoi(argv[1])-1, original_read_buff);
         return COMMAND_HANDLED;
     }
-    */
 
     return r;
 

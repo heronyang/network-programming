@@ -66,6 +66,7 @@ char *get_my_name() {
 
     return name;
 }
+*/
 
 char *get_following(char *buff) {
 
@@ -84,6 +85,7 @@ char *get_following(char *buff) {
 
 }
 
+/*
 int get_my_client_id() {
 
     Client *shm;
@@ -195,40 +197,28 @@ void broadcast_cmd_name(int connfd) {
 
 }
 
-/*
-void broadcast_cmd_yell(char *buff) {
+void broadcast_cmd_yell(int connfd, char *buff) {
 
-    char *msg;
-    if ((msg = shmat(g_shmid_msg, NULL, 0)) == (char *) -1) {
-        perror("shmat");
-        exit(1);
-    }
+    Client *c = clients_get_from_socket(connfd);
 
-    sprintf(msg, "*** %s yelled ***: %s\n", get_my_name(), get_following(buff));
+    sprintf(send_buff, "*** %s yelled ***: %s\n", c->name, get_following(buff));
 
-    shmdt(msg);
-
-    broadcast_sender_all();
+    broadcast_all(send_buff);
 
 }
 
-void broadcast_cmd_tell(int target_id, char *buff) {
+void broadcast_cmd_tell(int connfd, int target_id, char *buff) {
 
-    char *msg;
-    if ((msg = shmat(g_shmid_msg, NULL, 0)) == (char *) -1) {
-        perror("shmat");
-        exit(1);
-    }
+    Client *c = clients_get_from_socket(connfd);
 
     // strip twice to remove first two words
-    sprintf(msg, "*** %s told you ***: %s\n", get_my_name(), get_following(get_following(buff)));
+    sprintf(send_buff, "*** %s told you ***: %s\n", c->name, get_following(get_following(buff)));
 
-    shmdt(msg);
-
-    broadcast_sender_pid(get_pid_from_client_id(target_id));
+    broadcast_client(target_id, send_buff);
 
 }
 
+/*
 void broadcast_cmd_fifo_in(int source_id, char *cmd) {
     // *** (my name) (#<my client id>) just received from (other client's name) (#<other client's id>) by '(command line)' ***
     // ex. *** IamUser (#3) just received from student7 (#7) by 'cat <7' ***
