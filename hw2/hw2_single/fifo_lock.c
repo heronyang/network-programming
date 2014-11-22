@@ -8,7 +8,7 @@ char fifo_lock[CLIENT_MAX_NUM][CLIENT_MAX_NUM];
 
 void fifo_lock_init() {
 
-    int i;
+    int i, j;
     for( i=0 ; i<CLIENT_MAX_NUM ; i++ ) {
         for( j=0 ; j<CLIENT_MAX_NUM ; j++ ) {
             fifo_lock[i][j] = 0;

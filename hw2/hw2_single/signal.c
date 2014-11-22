@@ -5,6 +5,7 @@
 
 #include "signal.h"
 #include "variable.h"
+#include "fifo.h"
 
 int client_count;
 
@@ -37,7 +38,7 @@ void catch_int(int i) {
     }
 
     // release shared memory from system
-    //fifo_finalize();
+    fifo_finalize();
     fprintf(stderr, "exit program\n");
     exit(0);    // end program
 

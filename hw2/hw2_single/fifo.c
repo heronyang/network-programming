@@ -42,13 +42,12 @@ void fifo_init() {
     }
 }
 
-void fifo_close() {
+void fifo_close(int client_id) {
 
     int i, j;
     char fifo_path[PATH_LENGTH];
 
     // clean up unread fifo
-    int client_id = get_my_client_id();
     char c;
     for( i=0 ; i<CLIENT_MAX_NUM ; i++ ) {
         while(read(fifo_fd[i][client_id], &c, 1) != 0) {

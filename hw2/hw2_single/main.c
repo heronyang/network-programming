@@ -28,6 +28,8 @@
 #include "pipe.h"
 #include "env.h"
 #include "broadcast.h"
+#include "fifo.h"
+#include "fifo_lock.h"
 
 /*
  * Main
@@ -58,10 +60,8 @@ int main(int argc, char *argv[]) {
     env_init();
 
     /* FIFO: init */
-    /*
     fifo_init();
     fifo_lock_init();
-    */
 
     /* =============================================== */
     /* socket */
@@ -148,7 +148,7 @@ int main(int argc, char *argv[]) {
             env_set(i);
             if( client_handler(cs) == CLIENT_END ) {
 
-                //fifo_close();
+                fifo_close(i);
                 broadcast_user_disconnect(cs);
 
                 env_clean(i);

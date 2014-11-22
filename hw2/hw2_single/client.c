@@ -20,7 +20,8 @@
 #include "variable.h"
 #include "env.h"
 #include "broadcast.h"
-//#include "fifo_lock.h"
+#include "fifo_lock.h"
+#include "fifo.h"
 
 /*
  * Globals
@@ -332,7 +333,6 @@ void command_handler(int connfd) {
 
             }
 
-            /*
             if(argv[i] && strlen(argv[i])!=1 && argv[i][0] == '<' && argc == i+1) {
 
                 char **argv_s = extract_command(i);
@@ -341,8 +341,8 @@ void command_handler(int connfd) {
 
                 source_id--;
 
-                if(!fifo_lock_get(source_id, get_my_client_id())) {
-                    sprintf(send_buff, "*** Error: the pipe #%d->#%d does not exist yet. ***\n", source_id+1, get_my_client_id()+1);
+                if(!fifo_lock_get(source_id, clients_get_id_from_socket(connfd))) {
+                    sprintf(send_buff, "*** Error: the pipe #%d->#%d does not exist yet. ***\n", source_id+1, clients_get_id_from_socket(connfd)+1);
                     write(connfd, send_buff, strlen(send_buff)); 
                     return;
                 }
@@ -356,8 +356,8 @@ void command_handler(int connfd) {
                 if( fork_and_exec_fifo_in(connfd, argv_s, source_id) == EXIT_FAILURE ) {
                     return;
                 } else {
-                    fifo_lock_set(source_id, get_my_client_id(), FALSE);
-                    broadcast_cmd_fifo_in(source_id, original_read_buff);
+                    fifo_lock_set(source_id, clients_get_id_from_socket(connfd), FALSE);
+                    broadcast_cmd_fifo_in(connfd, source_id, original_read_buff);
                 }
 
                 return;
@@ -372,8 +372,8 @@ void command_handler(int connfd) {
 
                 target_id --;
 
-                if(fifo_lock_get(get_my_client_id(), target_id)) {
-                    sprintf(send_buff, "*** Error: the pipe #%d->#%d already exists. ***\n", get_my_client_id()+1, target_id+1);
+                if(fifo_lock_get(clients_get_id_from_socket(connfd), target_id)) {
+                    sprintf(send_buff, "*** Error: the pipe #%d->#%d already exists. ***\n", clients_get_id_from_socket(connfd)+1, target_id+1);
                     write(connfd, send_buff, strlen(send_buff)); 
                     return;
                 }
@@ -387,8 +387,8 @@ void command_handler(int connfd) {
                 if( fork_and_exec_fifo_out(connfd, argv_s, target_id) == EXIT_FAILURE ) {
                     return;
                 } else {
-                    fifo_lock_set(get_my_client_id(), target_id, TRUE);
-                    broadcast_cmd_fifo_out(target_id, original_read_buff);
+                    fifo_lock_set(clients_get_id_from_socket(connfd), target_id, TRUE);
+                    broadcast_cmd_fifo_out(connfd, target_id, original_read_buff);
                 }
 
                 return;
@@ -426,14 +426,14 @@ void command_handler(int connfd) {
 
                 char **argv_s = extract_command(i);
 
-                if(!fifo_lock_get(source_id, get_my_client_id())) {
-                    sprintf(send_buff, "*** Error: the pipe #%d->#%d does not exist yet. ***\n", source_id+1, get_my_client_id()+1);
+                if(!fifo_lock_get(source_id, clients_get_id_from_socket(connfd))) {
+                    sprintf(send_buff, "*** Error: the pipe #%d->#%d does not exist yet. ***\n", source_id+1, clients_get_id_from_socket(connfd)+1);
                     write(connfd, send_buff, strlen(send_buff)); 
                     return;
                 }
 
-                if(fifo_lock_get(get_my_client_id(), target_id)) {
-                    sprintf(send_buff, "*** Error: the pipe #%d->#%d already exists. ***\n", get_my_client_id()+1, target_id+1);
+                if(fifo_lock_get(clients_get_id_from_socket(connfd), target_id)) {
+                    sprintf(send_buff, "*** Error: the pipe #%d->#%d already exists. ***\n", clients_get_id_from_socket(connfd)+1, target_id+1);
                     write(connfd, send_buff, strlen(send_buff)); 
                     return;
                 }
@@ -454,17 +454,16 @@ void command_handler(int connfd) {
                     return;
                 } else {
 
-                    fifo_lock_set(source_id, get_my_client_id(), FALSE);
-                    fifo_lock_set(get_my_client_id(), target_id, TRUE);
+                    fifo_lock_set(source_id, clients_get_id_from_socket(connfd), FALSE);
+                    fifo_lock_set(clients_get_id_from_socket(connfd), target_id, TRUE);
 
-                    broadcast_cmd_fifo_in(source_id, original_read_buff);
-                    broadcast_cmd_fifo_out(target_id, original_read_buff);
+                    broadcast_cmd_fifo_in(connfd, source_id, original_read_buff);
+                    broadcast_cmd_fifo_out(connfd, target_id, original_read_buff);
 
                 }
 
                 return;
             }
-*/
 
         }
 

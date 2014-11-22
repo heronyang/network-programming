@@ -193,10 +193,9 @@ int fork_and_exec_file(int connfd, char **cmd, char *filepath) {
 
 }
 
-/*
 int fork_and_exec_fifo_in(int connfd, char **cmd, int source_id) {
 
-    int client_id = get_my_client_id();
+    int client_id = clients_get_id_from_socket(connfd);
 
     pid_t pid;
     pid = fork();
@@ -212,7 +211,7 @@ int fork_and_exec_fifo_in(int connfd, char **cmd, int source_id) {
         if(!DEBUG)  dup2(connfd, STDERR_FILENO);
 
         // redirect STDIN to pipe_map[0][READ]
-        if(DEBUG)   fprintf(stderr, "fifo_in: fifo_path../%sclient_%d_%d\n", FIFO_PATH_DIR, source_id, client_id);
+        if(DEBUG)   fprintf(stderr, "fifo_in: fifo_path: %sclient_%d_%d\n", FIFO_PATH_DIR, source_id, client_id);
         dup2(fifo_fd[source_id][client_id], STDIN_FILENO);
 
         if( cmd[0][0]=='/' || execvp(cmd[0], cmd)<0 ) {
@@ -251,7 +250,7 @@ int fork_and_exec_fifo_out(int connfd, char **cmd, int target_id) {
 
     } else if (pid ==0) {           // if child
 
-        sprintf(fifo_path, "../%sclient_%d_%d", FIFO_PATH_DIR, client_id, target_id);
+        sprintf(fifo_path, "%sclient_%d_%d", FIFO_PATH_DIR, client_id, target_id);
         fprintf(stderr, "fifo_path:%s\n", fifo_path);
         if((fd = open(fifo_path, O_NONBLOCK | O_WRONLY) ) < 0) {
             perror("open");
@@ -285,7 +284,7 @@ int fork_and_exec_fifo_out(int connfd, char **cmd, int target_id) {
 
 int fork_and_exec_fifo_in_out(int connfd, char **cmd, int source_id, int target_id) {
 
-    int client_id = get_my_client_id();
+    int client_id = clients_get_id_from_socket(connfd);
 
     int fd;
     char fifo_path[PATH_LENGTH];
@@ -301,7 +300,7 @@ int fork_and_exec_fifo_in_out(int connfd, char **cmd, int source_id, int target_
     } else if (pid ==0) {           // if child
 
         // out
-        sprintf(fifo_path, "../%sclient_%d_%d", FIFO_PATH_DIR, client_id, target_id);
+        sprintf(fifo_path, "%sclient_%d_%d", FIFO_PATH_DIR, client_id, target_id);
         fprintf(stderr, "fifo_path:%s\n", fifo_path);
         if((fd = open(fifo_path, O_NONBLOCK | O_WRONLY) ) < 0) {
             perror("open");
@@ -311,7 +310,7 @@ int fork_and_exec_fifo_in_out(int connfd, char **cmd, int source_id, int target_
         if(!DEBUG)  dup2(fd, STDERR_FILENO);
 
         // in
-        if(DEBUG)   fprintf(stderr, "fifo_in: fifo_path../%sclient_%d_%d\n", FIFO_PATH_DIR, source_id, client_id);
+        if(DEBUG)   fprintf(stderr, "fifo_in: fifo_path: %sclient_%d_%d\n", FIFO_PATH_DIR, source_id, client_id);
         dup2(fifo_fd[source_id][client_id], STDIN_FILENO);
 
         if( cmd[0][0]=='/' || execvp(cmd[0], cmd)<0 ) {
@@ -332,7 +331,7 @@ int fork_and_exec_fifo_in_out(int connfd, char **cmd, int source_id, int target_
     return EXIT_SUCCESS;
 
 }
-*/
+
 /*
  * Debug Functions
  */

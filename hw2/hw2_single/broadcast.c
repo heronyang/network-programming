@@ -85,80 +85,13 @@ char *get_following(char *buff) {
 
 }
 
-/*
-int get_my_client_id() {
-
-    Client *shm;
-    if ((shm = shmat(g_shmid, NULL, 0)) == (Client *) -1) {
-        perror("shmat");
-        exit(1);
-    }
-
-    int i, pid = getpid();
-    int res = 0;
-    for( i=0 ; i<CLIENT_MAX_NUM ; i++ ) {
-        if(shm[i].valid && shm[i].pid == pid) {
-            res = i;
-        }
-    }
-
-    shmdt(shm);
-
-    return res;
-}
-
-int get_pid_from_client_id(int client_id) {
-
-    Client *shm;
-    if ((shm = shmat(g_shmid, NULL, 0)) == (Client *) -1) {
-        perror("shmat");
-        exit(1);
-    }
-
-    int r = 0;
-
-    if(shm[client_id].valid)    r = shm[client_id].pid; 
-    shmdt(shm);
-
-    return r;
-
-}
-
 int check_client_exist(int client_id) {
 
-    Client *shm;
-    if ((shm = shmat(g_shmid, NULL, 0)) == (Client *) -1) {
-        perror("shmat");
-        exit(1);
-    }
-
-    if(shm[client_id].valid)    return TRUE;
-    return FALSE;
+    return clients[client_id].valid;
 
 }
-*/
 
 /* [Public] Recieve (Signal Callback) */
-/*
-void broadcast_catch(int signo) {
-
-    char *msg;
-    if ((msg = shmat(g_shmid_msg, NULL, 0)) == (char *) -1) {
-        perror("shmat");
-        exit(1);
-    }
-
-    if (signo == SIGUSR1) {
-        if(DEBUG)   fprintf(stderr, "get SIGUSR1: %s\n", msg);
-        if(write(client_socket, msg, strlen(msg)) < 0)
-            perror("write");
-    }
-    // else, drop
-
-    shmdt(msg);
-}
-*/
-
 /* [Public] Events */
 void broadcast_user_connect(int connfd, struct sockaddr_in address) {
 
@@ -218,44 +151,36 @@ void broadcast_cmd_tell(int connfd, int target_id, char *buff) {
 
 }
 
-/*
-void broadcast_cmd_fifo_in(int source_id, char *cmd) {
+void broadcast_cmd_fifo_in(int connfd, int source_id, char *cmd) {
     // *** (my name) (#<my client id>) just received from (other client's name) (#<other client's id>) by '(command line)' ***
     // ex. *** IamUser (#3) just received from student7 (#7) by 'cat <7' ***
+
+    Client *c = clients_get_from_socket(connfd);
+    Client *s_c = clients_get(source_id);
+    int client_id = clients_get_id_from_socket(connfd);
     
     int len = strlen(cmd);
     if(cmd[len-1] == '\n')  cmd[len-1] = '\0';
 
-    char *msg;
-    if ((msg = shmat(g_shmid_msg, NULL, 0)) == (char *) -1) {
-        perror("shmat");
-        exit(1);
-    }
-
     // strip twice to remove first two words
-    sprintf(msg, "*** %s (#%d) just received from %s (#%d) by '%s' ***\n", get_my_name(), get_my_client_id()+1, getname(source_id), source_id+1, cmd);
+    sprintf(send_buff, "*** %s (#%d) just received from %s (#%d) by '%s' ***\n", c->name, client_id+1, s_c->name, source_id+1, cmd);
 
-    shmdt(msg);
-    broadcast_sender_all();
+    broadcast_all(send_buff);
 }
 
-void broadcast_cmd_fifo_out(int target_id, char *cmd) {
+void broadcast_cmd_fifo_out(int connfd, int target_id, char *cmd) {
     // *** (name) (#<client id>) just piped '(command line)' to (receiver's name) (#<receiver's client_id>) ***
     // ex. *** IamUser (#3) just piped 'cat test.html | cat >1' to Iam1 (#1) ***
+
+    Client *c = clients_get_from_socket(connfd);
+    Client *t_c = clients_get(target_id);
+    int client_id = clients_get_id_from_socket(connfd);
 
     int len = strlen(cmd);
     if(cmd[len-1] == '\n')  cmd[len-1] = '\0';
 
-    char *msg;
-    if ((msg = shmat(g_shmid_msg, NULL, 0)) == (char *) -1) {
-        perror("shmat");
-        exit(1);
-    }
-
     // strip twice to remove first two words
-    sprintf(msg, "*** %s (#%d) just piped '%s' to %s (#%d) ***\n", get_my_name(), get_my_client_id()+1, cmd, getname(target_id), target_id+1);
+    sprintf(send_buff, "*** %s (#%d) just piped '%s' to %s (#%d) ***\n", c->name, client_id+1, cmd, t_c->name, target_id+1);
 
-    shmdt(msg);
-    broadcast_sender_all();
+    broadcast_all(send_buff);
 }
-*/
