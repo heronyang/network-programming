@@ -118,6 +118,9 @@ int main(int argc, char *argv[]) {
             perror("select");
         }
 
+        //
+        if( DEBUG ) debug_print_clients();
+
         if( FD_ISSET(listenfd, &fds) ) {  // new client
 
             /* socket - accept */

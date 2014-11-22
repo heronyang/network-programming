@@ -43,4 +43,3 @@ void env_clean(int client_id) {
     strcpy(clients_env_var[client_id], default_value);
 
 }
-

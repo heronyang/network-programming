@@ -97,3 +97,11 @@ int clients_get_id_from_socket(int socket) {
     return 0;
 
 }
+
+void debug_print_clients() {
+    int i;
+    for( i=0 ; i<CLIENT_MAX_NUM ; i++ ) {
+        Client *c = clients_get(i);
+        fprintf( stderr, "[%d] valid = %d\tsocket = %d\n", i, c->valid, c->socket );
+    }
+}
