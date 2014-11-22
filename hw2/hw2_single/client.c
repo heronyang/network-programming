@@ -19,8 +19,7 @@
 #include "mytype.h"
 #include "variable.h"
 #include "env.h"
-//#include "client_name.h"
-//#include "broadcast.h"
+#include "broadcast.h"
 //#include "fifo_lock.h"
 
 /*
@@ -104,26 +103,22 @@ int read_helper(int connfd, char *buf) {
     return count;
 }
 
-/*
 void cmd_who(int connfd) {
 
     char content[SIZE_SEND_BUFF] = "<ID>\t<nickname>\t<IP/port>\t<indicate me>\n";
     char t_s[TMP_STRING_SIZE];
 
-    int pid = getpid(), i;
+    int i;
+    Client *c;
 
-    Client *shm;
-    if ((shm = shmat(g_shmid, NULL, 0)) == (Client *) -1) {
-        perror("shmat");
-        exit(1);
-    }
     for( i=0 ; i<CLIENT_MAX_NUM ; i++ ) {
 
-        if(!shm[i].valid)   continue;
+        c = clients_get(i);
+        if(c->valid == FALSE)   continue;
 
-        sprintf(t_s, "%d\t%s\t%s/%d", i+1, getname(i), shm[i].ip, shm[i].port);
+        sprintf(t_s, "%d\t%s\t%s/%d", i+1, c->name, c->ip, c->port);
 
-        if(shm[i].pid == pid) {
+        if(c->socket == connfd) {
             strcat(t_s, "\t<-me\n");
         } else {
             strcat(t_s, "\n");
@@ -132,7 +127,6 @@ void cmd_who(int connfd) {
         strcat(content, t_s);
 
     }
-    shmdt(shm);
 
     snprintf(send_buff, sizeof(send_buff), content);
     write(connfd, send_buff, strlen(send_buff)); 
@@ -143,8 +137,11 @@ void cmd_name(int connfd, char *name) {
 
     // if already exisits
     int i;
+    Client *c;
+
     for( i=0 ; i<CLIENT_MAX_NUM ; i++ ) {
-        if(strcmp(getname(i), name) == 0) {
+        c = clients_get(i);
+        if(strcmp(c->name, name) == 0) {
 
             sprintf(send_buff, "*** User '%s' already exists. ***\n", name);
             write(connfd, send_buff, strlen(send_buff)); 
@@ -153,25 +150,13 @@ void cmd_name(int connfd, char *name) {
         }
     }
 
-    Client *shm;
-    if ((shm = shmat(g_shmid, NULL, 0)) == (Client *) -1) {
-        perror("shmat");
-        exit(1);
-    }
+    c = clients_get_from_socket(connfd);
+    strcpy(c->name, name);
 
-    int pid = getpid();
-    for( i=0 ; i<CLIENT_MAX_NUM ; i++ ) {
-
-        if(shm[i].valid && shm[i].pid == pid) {
-            setname(i, name);
-        }
-
-    }
-    shmdt(shm);
-
-    broadcast_cmd_name();
+    broadcast_cmd_name(connfd);
 }
 
+/*
 void cmd_yell(char *buff) {
     broadcast_cmd_yell(buff);
 }
@@ -231,7 +216,6 @@ int prompt(int connfd) {
         printenv_helper(connfd);
         return COMMAND_HANDLED;
     }
-    /*
     if(strcmp(argv[0], "who") == 0) {
         cmd_who(connfd);
         return COMMAND_HANDLED;
@@ -240,6 +224,7 @@ int prompt(int connfd) {
         cmd_name(connfd, argv[1]);
         return COMMAND_HANDLED;
     }
+    /*
     if(strcmp(argv[0], "yell") == 0) {
         cmd_yell(original_read_buff);
         return COMMAND_HANDLED;

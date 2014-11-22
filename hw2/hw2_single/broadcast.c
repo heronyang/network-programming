@@ -9,32 +9,41 @@
 #include "constant.h"
 #include "mytype.h"
 #include "variable.h"
-#include "client_name.h"
+#include "clients.h"
+#include "broadcast.h"
 
-// int client_socket;   // should go array
-int g_shmid, g_shmid_msg;
+char send_buff[SIZE_SEND_BUFF];
 
-/* [Private] Send */
-void broadcast_sender_pid(int pid) {
-    kill(pid, SIGUSR1);
+/* Private */
+void broadcast_client(int client_id, char *content) {
+
+    int connfd;
+    Client *c;
+    c = clients_get(client_id);
+    connfd = c->socket;
+
+    write(connfd, content, strlen(content)); 
+
 }
 
-void broadcast_sender_all() {
+void broadcast_all(char *content) {
+
     int i;
-    Client *shm;
-    if ((shm = shmat(g_shmid, NULL, 0)) == (Client *) -1) {
-        perror("shmat");
-        exit(1);
-    }
+    Client *c;
+
     for( i=0 ; i<CLIENT_MAX_NUM ; i++ ) {
-        if(shm[i].valid) {
-            broadcast_sender_pid(shm[i].pid);
+        c = clients_get(i);
+        if(c->valid) {
+            fprintf(stderr, "broadcasting to client_id = %d\n", i);
+            broadcast_client(i, content);
         }
     }
-    shmdt(shm);
+
 }
 
+
 /* Tool Function */
+/*
 char *get_my_name() {
 
     Client *shm;
@@ -125,8 +134,10 @@ int check_client_exist(int client_id) {
     return FALSE;
 
 }
+*/
 
 /* [Public] Recieve (Signal Callback) */
+/*
 void broadcast_catch(int signo) {
 
     char *msg;
@@ -144,83 +155,47 @@ void broadcast_catch(int signo) {
 
     shmdt(msg);
 }
+*/
 
 /* [Public] Events */
-void broadcast_init(int connfd) {
-    client_socket = connfd;
-    fprintf(stderr, "init socket:%d\n", client_socket);
-}
-
-void broadcast_user_connect(struct sockaddr_in address) {
+void broadcast_user_connect(int connfd, struct sockaddr_in address) {
 
     fprintf(stderr, "broadcast connect\n");
+    sprintf(send_buff, "*** User '(no name)' entered from %s/%d. ***\n", inet_ntoa(address.sin_addr), ntohs(address.sin_port));
 
-    char *msg;
-    if ((msg = shmat(g_shmid_msg, NULL, 0)) == (char *) -1) {
-        perror("shmat");
-        exit(1);
-    }
-
-    sprintf(msg, "*** User '(no name)' entered from %s/%d. ***\n", inet_ntoa(address.sin_addr), ntohs(address.sin_port));
-    shmdt(msg);
-
-    broadcast_sender_all();
+    broadcast_all(send_buff);
 
 }
 
-void broadcast_user_disconnect() {
+void broadcast_user_disconnect(int connfd) {
+
+    Client *c = clients_get_from_socket(connfd);
 
     fprintf(stderr, "broadcast disconnect\n");
+    sprintf(send_buff, "*** User '%s' left. ***\n", c->name);
 
-    char *msg;
-    if ((msg = shmat(g_shmid_msg, NULL, 0)) == (char *) -1) {
-        perror("shmat");
-        exit(1);
-    }
-
-    sprintf(msg, "*** User '%s' left. ***\n", get_my_name());
-
-    shmdt(msg);
-
-    broadcast_sender_all();
+    broadcast_all(send_buff);
 
 }
 
-void broadcast_cmd_name() {
+void broadcast_cmd_name(int connfd) {
 
-    char *msg;
-    if ((msg = shmat(g_shmid_msg, NULL, 0)) == (char *) -1) {
-        perror("shmat");
-        exit(1);
-    }
-
-    Client *shm;
-    if ((shm = shmat(g_shmid, NULL, 0)) == (Client *) -1) {
-        perror("shmat");
-        exit(1);
-    }
-
-    int pid = getpid(), i;
     int port = 0;
     char ip[IP_STRING_SIZE], name[NAME_SIZE];
-    for( i=0 ; i<CLIENT_MAX_NUM ; i++ ) {
-        if(shm[i].valid && shm[i].pid == pid) {
-            strcpy(ip, shm[i].ip);
-            port = shm[i].port;
-            strcpy(name, getname(i));
-        }
-    }
+
+    Client *c = clients_get_from_socket(connfd);
+    strcpy(ip, c->ip);
+    port = c->port;
+    strcpy(name, c->name);
 
 
-    sprintf(msg, "*** User from %s/%d is named '%s'. ***\n", ip, port ,name);
+    sprintf(send_buff, "*** User from %s/%d is named '%s'. ***\n", ip, port ,name);
 
-    shmdt(shm);
-    shmdt(msg);
-
-    broadcast_sender_all();
+    broadcast_all(send_buff);
 
 }
 
+/*
 void broadcast_cmd_yell(char *buff) {
 
     char *msg;
@@ -293,3 +268,4 @@ void broadcast_cmd_fifo_out(int target_id, char *cmd) {
     shmdt(msg);
     broadcast_sender_all();
 }
+*/

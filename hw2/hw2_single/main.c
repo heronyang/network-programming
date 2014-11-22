@@ -27,6 +27,7 @@
 #include "clients.h"
 #include "pipe.h"
 #include "env.h"
+#include "broadcast.h"
 
 /*
  * Main
@@ -127,7 +128,7 @@ int main(int argc, char *argv[]) {
             clients_new(serv_addr, connfd);
 
             welcome_msg(connfd);
-            //broadcast_user_connect(serv_addr);
+            broadcast_user_connect(connfd, serv_addr);
 
             print_prompt_sign(connfd);
 
@@ -148,7 +149,7 @@ int main(int argc, char *argv[]) {
             if( client_handler(cs) == CLIENT_END ) {
 
                 //fifo_close();
-                //broadcast_user_disconnect();
+                broadcast_user_disconnect(cs);
 
                 env_clean(i);
                 clients_close(cs);
