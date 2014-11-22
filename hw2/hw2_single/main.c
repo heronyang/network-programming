@@ -25,6 +25,7 @@
 #include "signal.h"
 #include "client.h"
 #include "clients.h"
+#include "pipe.h"
 
 /*
  * Main
@@ -36,6 +37,7 @@ int main(int argc, char *argv[]) {
     /* =============================================== */
     int connfd, listenfd = 0, addrlen;
     int max_fd, activity, cs, i;
+    int client_id;
     struct sockaddr_in serv_addr; 
     fd_set fds;
     Client *c;
@@ -45,7 +47,7 @@ int main(int argc, char *argv[]) {
     /* =============================================== */
 
     /* signal: init */
-    // signal_init();
+    signal_init();
 
     /* client: init */
     clients_init();
@@ -97,6 +99,7 @@ int main(int argc, char *argv[]) {
         for( i=0 ; i<CLIENT_MAX_NUM ; i++ ) {
 
             c = clients_get(i);
+            if(c->valid == FALSE)   continue;
             cs = c->socket;
 
             if( cs>0 )          FD_SET(cs, &fds);
@@ -107,7 +110,7 @@ int main(int argc, char *argv[]) {
         // select
         activity = select( max_fd+1, &fds, NULL, NULL, NULL );
         if( (activity<0) && (errno!=EINTR) ) {
-            perror("select error");
+            perror("select");
         }
 
         if( FD_ISSET(listenfd, &fds) ) {  // new client
@@ -124,6 +127,9 @@ int main(int argc, char *argv[]) {
 
             print_prompt_sign(connfd);
 
+            client_id = clients_get_id_from_socket(cs);
+            pipe_reset(client_id);
+
         }
 
         for( i=0 ; i<CLIENT_MAX_NUM ; i++ ) {
@@ -138,9 +144,10 @@ int main(int argc, char *argv[]) {
 
                 //fifo_close();
                 //broadcast_user_disconnect();
-                clients_close(connfd);
 
-                fprintf(stderr, "closed connection: %d\n", connfd);
+                clients_close(cs);
+
+                fprintf(stderr, "closed connection: %d\n", cs);
 
             }
         

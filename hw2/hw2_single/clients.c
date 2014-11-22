@@ -84,3 +84,16 @@ Client *clients_get_from_socket(int socket) {
     return NULL;
 
 }
+
+int clients_get_id_from_socket(int socket) {
+
+    int i;
+    for( i=0 ; i<CLIENT_MAX_NUM ; i++ ) {
+
+        if(clients[i].valid == TRUE && clients[i].socket == socket) return i;
+
+    }
+
+    return 0;
+
+}

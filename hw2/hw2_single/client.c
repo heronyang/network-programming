@@ -15,11 +15,12 @@
 #include "pipe.h"
 #include "fork_exec.h"
 #include "client.h"
+#include "clients.h"
 #include "mytype.h"
 #include "variable.h"
-#include "client_name.h"
-#include "broadcast.h"
-#include "fifo_lock.h"
+//#include "client_name.h"
+//#include "broadcast.h"
+//#include "fifo_lock.h"
 
 /*
  * Globals
@@ -317,6 +318,8 @@ void command_handler(int connfd) {
     int i;
     int is_pipe;
 
+    int client_id = clients_get_id_from_socket(connfd);
+
     while(1) {
 
         is_pipe = FALSE;
@@ -340,7 +343,7 @@ void command_handler(int connfd) {
                 if( (r=fork_and_exec_pipe(connfd, argv_s, p_n)) == EXIT_FAILURE) {
                     return;
                 } else if (r != SKIP_SHIFT) {
-                    pipe_shift();
+                    pipe_shift(client_id);
                 }
 
                 break;
@@ -356,7 +359,7 @@ void command_handler(int connfd) {
                     return;
                 }
 
-                pipe_shift();
+                pipe_shift(client_id);
                 return;
 
             }
@@ -503,7 +506,7 @@ void command_handler(int connfd) {
 
     if(argc == 0)   return;
     if(fork_and_exec_last(connfd, argv) == EXIT_SUCCESS) {
-        pipe_shift();
+        pipe_shift(client_id);
     }
 
 }

@@ -17,10 +17,6 @@ void fifo_lock_init() {
 
 }
 
-void fifo_lock_close() {
-    // ;
-}
-
 void fifo_lock_set(int source_id, int target_id, char val) {
     fifo_lock[source_id][target_id] = val;
 }

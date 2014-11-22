@@ -4,6 +4,7 @@
 #include <sys/wait.h>
 
 #include "signal.h"
+#include "variable.h"
 
 int client_count;
 
@@ -32,13 +33,11 @@ void catch_chld(int snum) {
 void catch_int(int i) {
 
     if(client_count!=0) {
-        fprintf(stderr, "unfinished client, can't close\n");
-        return;
+        fprintf(stderr, "\nclient_count = %d, unfinished client, please kill zoombie\n", client_count);
     }
 
     // release shared memory from system
     //fifo_finalize();
-    //fifo_lock_close();
     fprintf(stderr, "exit program\n");
     exit(0);    // end program
 

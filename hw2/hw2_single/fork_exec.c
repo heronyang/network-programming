@@ -14,6 +14,7 @@
 #include "pipe.h"
 #include "fork_exec.h"
 #include "variable.h"
+#include "clients.h"
 //#include "broadcast.h"
 
 char pipe_buff[SIZE_PIPE_BUFF];
@@ -24,6 +25,8 @@ int fifo_fd[CLIENT_MAX_NUM][CLIENT_MAX_NUM];
  */
 // simple exec (no pipe included), for last command (no following pipe)
 int fork_and_exec_last(int connfd, char **cmd) {
+
+    int client_id = clients_get_id_from_socket(connfd);
 
     pid_t pid;
     pid = fork();
@@ -36,10 +39,10 @@ int fork_and_exec_last(int connfd, char **cmd) {
     } else if (pid == 0) {           // if child
 
         // bind pipe in
-        int fd_in = pipe_get();
+        int fd_in = pipe_get(client_id);
         if(fd_in)   dup2(fd_in, STDIN_FILENO);
 
-        if(DEBUG)   debug_fork_and_exec_last(cmd, fd_in);
+        if(DEBUG)   debug_fork_and_exec_last(client_id, cmd, fd_in);
         
         // bind out to stdout
         dup2(connfd, STDOUT_FILENO);    // duplicate socket on stdout
@@ -70,7 +73,8 @@ int fork_and_exec_pipe(int connfd, char **cmd, int p_n) {
     // if(strcmp(cmd[0], "cat")==0 && cmd[1]==NULL)    return SKIP_SHIFT;
 
     // create pipe
-    int *fd = pipe_create(p_n);
+    int client_id = clients_get_id_from_socket(connfd);
+    int *fd = pipe_create(client_id, p_n);
 
     pid_t pid;
     pid = fork();
@@ -83,17 +87,17 @@ int fork_and_exec_pipe(int connfd, char **cmd, int p_n) {
     } else if (pid ==0) {           // if child
 
         // output old_pipe content if exist
-        int *old_pipe = get_old_pipe();
-        if(old_pipe!=NULL) {
+        int *op = get_old_pipe(client_id);
+        if(op!=NULL) {
 
             memset(pipe_buff, 0, sizeof(pipe_buff)); 
 
             int count;
-            if( (count = read(old_pipe[READ], pipe_buff, SIZE_PIPE_BUFF)) < 0 ) {
+            if( (count = read(op[READ], pipe_buff, SIZE_PIPE_BUFF)) < 0 ) {
                 fprintf(stderr, "read pipe connent error: %s\n", strerror(errno));
             }
 
-            if(close(old_pipe[READ]) < 0) {
+            if(close(op[READ]) < 0) {
                 fprintf(stderr, "pipe close error (old_pipe in): %s\n", strerror(errno));
                 exit(EXIT_FAILURE);
             }
@@ -115,10 +119,10 @@ int fork_and_exec_pipe(int connfd, char **cmd, int p_n) {
         if(!DEBUG)  dup2(connfd, STDERR_FILENO);
 
         // DEBUG
-        if(DEBUG)   debug_print_pipe_map();
+        if(DEBUG)   debug_print_pipe_map(client_id);
 
         // redirect STDIN to pipe_map[0][READ]
-        int fd_in = pipe_get();
+        int fd_in = pipe_get(client_id);
         if(fd_in)   dup2(fd_in, STDIN_FILENO);
 
         if(cmd[0][0]=='/' || execvp(cmd[0], cmd)<0) {
@@ -148,6 +152,8 @@ int fork_and_exec_pipe(int connfd, char **cmd, int p_n) {
 // output to file ('>')
 int fork_and_exec_file(int connfd, char **cmd, char *filepath) {
 
+    int client_id = clients_get_id_from_socket(connfd);
+
     pid_t pid;
     pid = fork();
 
@@ -164,7 +170,7 @@ int fork_and_exec_file(int connfd, char **cmd, char *filepath) {
         if(!DEBUG)  dup2(connfd, STDERR_FILENO);
 
         // redirect STDIN to pipe_map[0][READ]
-        int fd_in = pipe_get();
+        int fd_in = pipe_get(client_id);
         if(fd_in)   dup2(fd_in, STDIN_FILENO);
 
         if( cmd[0][0]=='/' || execvp(cmd[0], cmd)<0 ) {
@@ -230,7 +236,7 @@ int fork_and_exec_fifo_in(int connfd, char **cmd, int source_id) {
 
 int fork_and_exec_fifo_out(int connfd, char **cmd, int target_id) {
 
-    int client_id = get_my_client_id();
+    int client_id = clients_get_id_from_socket(connfd);
 
     int fd;
     char fifo_path[PATH_LENGTH];
@@ -255,7 +261,7 @@ int fork_and_exec_fifo_out(int connfd, char **cmd, int target_id) {
         if(!DEBUG)  dup2(fd, STDERR_FILENO);
 
         // redirect STDIN to pipe_map[0][READ]
-        int fd_in = pipe_get();
+        int fd_in = pipe_get(client_id);
         if(fd_in)   dup2(fd_in, STDIN_FILENO);
 
         if( cmd[0][0]=='/' || execvp(cmd[0], cmd)<0 ) {

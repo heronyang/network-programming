@@ -1,6 +1,8 @@
 #ifndef MYTYPE_H
 #define MYTYPE_H
 
+#include <stdint.h>
+
 typedef struct {
     int valid;
     char *ip;

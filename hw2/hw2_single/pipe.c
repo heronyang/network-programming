@@ -6,54 +6,54 @@
 #include "constant.h"
 #include "pipe.h"
 
-int *pipe_map[MAX_PIPE_NUM];
-int *old_pipe = NULL;
+int *pipe_map[CLIENT_MAX_NUM][MAX_PIPE_NUM];
+int *old_pipe[CLIENT_MAX_NUM];
 
 /*
  * Pipe Map
  */
-int *pipe_create(int p_n) {
+int *pipe_create(int client_id, int p_n) {
 
     int *fd = malloc(sizeof(int) * 2);
     if(pipe(fd) < 0)    fprintf(stderr, "pipe failed\n");
 
-    if(pipe_map[p_n])   old_pipe = pipe_map[p_n];
-    else                old_pipe = NULL;
+    if(pipe_map[client_id][p_n])    old_pipe[client_id] = pipe_map[client_id][p_n];
+    else                            old_pipe[client_id] = NULL;
 
-    pipe_map[p_n] = fd;
+    pipe_map[client_id][p_n] = fd;
     return fd;
 
 }
 
-int pipe_get() {
+int pipe_get(int client_id) {
 
-    if(!pipe_map[0])    return 0;
-    return pipe_map[0][READ];
+    if(!pipe_map[client_id][0]) return 0;
+    return pipe_map[client_id][0][READ];
 
 }
 
-void pipe_shift() {
+void pipe_shift(int client_id) {
 
     int i;
-    for(i=0 ; i<(MAX_PIPE_NUM-1) ; i++) pipe_map[i] = pipe_map[i+1];
+    for(i=0 ; i<(MAX_PIPE_NUM-1) ; i++) pipe_map[client_id][i] = pipe_map[client_id][i+1];
 
 }
 
-void pipe_reset() {
+void pipe_reset(int client_id) {
 
     int i;
-    for(i=0 ; i<MAX_PIPE_NUM ; i++) pipe_map[i] = NULL;
+    for(i=0 ; i<MAX_PIPE_NUM ; i++) pipe_map[client_id][i] = NULL;
 
 }
 
-int *get_old_pipe() {
-    return old_pipe;
+int *get_old_pipe(int client_id) {
+    return old_pipe[client_id];
 }
 
 /*
  * Debug
  */
-void debug_fork_and_exec_last(char **argv, int fd_in) {
+void debug_fork_and_exec_last(int client_id, char **argv, int fd_in) {
     int i;
     fprintf(stderr, "\n==========\n(rest)exec: ");
     for( i=0 ; argv[i]!=NULL ; i++ ){
@@ -64,18 +64,18 @@ void debug_fork_and_exec_last(char **argv, int fd_in) {
     fprintf(stderr, "last...\n");
     fprintf(stderr, "----\n");
     for( i=0 ; i<10 ; i++ )
-        if(pipe_map[i]) fprintf(stderr, "pipe_map[%d] = %p, [%d][%d]\n", i, pipe_map[i], pipe_map[i][READ], pipe_map[i][WRITE]);
+        if(pipe_map[client_id][i]) fprintf(stderr, "pipe_map[%d][%d] = %p, [%d][%d]\n", client_id, i, pipe_map[client_id][i], pipe_map[client_id][i][READ], pipe_map[client_id][i][WRITE]);
     fprintf(stderr, "----\n");
 
     fprintf(stderr, "READ: %d\n", fd_in);
     fprintf(stderr, "WRITE: -\n");
 }
 
-void debug_print_pipe_map() {
+void debug_print_pipe_map(int client_id) {
     int i;
     fprintf(stderr, "----\n");
     for( i=0 ; i<10 ; i++ )
-        if(pipe_map[i]) fprintf(stderr, "pipe_map[%d] = %p, [%d][%d]\n", i, pipe_map[i], pipe_map[i][READ], pipe_map[i][WRITE]);
+        if(pipe_map[client_id][i]) fprintf(stderr, "pipe_map[%d][%d] = %p, [%d][%d]\n", client_id, i, pipe_map[client_id][i], pipe_map[client_id][i][READ], pipe_map[client_id][i][WRITE]);
     fprintf(stderr, "----\n");
 }
 
