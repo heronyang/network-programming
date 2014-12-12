@@ -3,62 +3,62 @@ login1
 1| ****************************************
 1| ** Welcome to the information server. **
 1| ****************************************
-1| *** User '(no name)' entered from 127.0.0.1/52481. ***
+1| *** User '(no name)' entered from 140.113.250.43/53011. ***
 1| % 
 
 login2
-1| *** User '(no name)' entered from 127.0.0.1/52482. ***
+1| *** User '(no name)' entered from 140.113.250.43/55089. ***
 2| ****************************************
 2| ** Welcome to the information server. **
 2| ****************************************
-2| *** User '(no name)' entered from 127.0.0.1/52482. ***
+2| *** User '(no name)' entered from 140.113.250.43/55089. ***
 2| % 
 
 login3
-1| *** User '(no name)' entered from 127.0.0.1/52483. ***
-2| *** User '(no name)' entered from 127.0.0.1/52483. ***
+1| *** User '(no name)' entered from 140.113.250.43/64670. ***
+2| *** User '(no name)' entered from 140.113.250.43/64670. ***
 3| ****************************************
 3| ** Welcome to the information server. **
 3| ****************************************
-3| *** User '(no name)' entered from 127.0.0.1/52483. ***
+3| *** User '(no name)' entered from 140.113.250.43/64670. ***
 3| % 
 
 login4
-1| *** User '(no name)' entered from 127.0.0.1/52484. ***
-2| *** User '(no name)' entered from 127.0.0.1/52484. ***
-3| *** User '(no name)' entered from 127.0.0.1/52484. ***
+1| *** User '(no name)' entered from 140.113.250.43/56880. ***
+2| *** User '(no name)' entered from 140.113.250.43/56880. ***
+3| *** User '(no name)' entered from 140.113.250.43/56880. ***
 4| ****************************************
 4| ** Welcome to the information server. **
 4| ****************************************
-4| *** User '(no name)' entered from 127.0.0.1/52484. ***
+4| *** User '(no name)' entered from 140.113.250.43/56880. ***
 4| % 
 
 1 % name Egglet
-1| *** User from 127.0.0.1/52481 is named 'Egglet'. ***
+1| *** User from 140.113.250.43/53011 is named 'Egglet'. ***
 1| % 
-2| *** User from 127.0.0.1/52481 is named 'Egglet'. ***
-3| *** User from 127.0.0.1/52481 is named 'Egglet'. ***
-4| *** User from 127.0.0.1/52481 is named 'Egglet'. ***
+2| *** User from 140.113.250.43/53011 is named 'Egglet'. ***
+3| *** User from 140.113.250.43/53011 is named 'Egglet'. ***
+4| *** User from 140.113.250.43/53011 is named 'Egglet'. ***
 
 2 % name FruitBuffet
-1| *** User from 127.0.0.1/52482 is named 'FruitBuffet'. ***
-2| *** User from 127.0.0.1/52482 is named 'FruitBuffet'. ***
+1| *** User from 140.113.250.43/55089 is named 'FruitBuffet'. ***
+2| *** User from 140.113.250.43/55089 is named 'FruitBuffet'. ***
 2| % 
-3| *** User from 127.0.0.1/52482 is named 'FruitBuffet'. ***
-4| *** User from 127.0.0.1/52482 is named 'FruitBuffet'. ***
+3| *** User from 140.113.250.43/55089 is named 'FruitBuffet'. ***
+4| *** User from 140.113.250.43/55089 is named 'FruitBuffet'. ***
 
 3 % name GingerCookies
-1| *** User from 127.0.0.1/52483 is named 'GingerCookies'. ***
-2| *** User from 127.0.0.1/52483 is named 'GingerCookies'. ***
-3| *** User from 127.0.0.1/52483 is named 'GingerCookies'. ***
+1| *** User from 140.113.250.43/64670 is named 'GingerCookies'. ***
+2| *** User from 140.113.250.43/64670 is named 'GingerCookies'. ***
+3| *** User from 140.113.250.43/64670 is named 'GingerCookies'. ***
 3| % 
-4| *** User from 127.0.0.1/52483 is named 'GingerCookies'. ***
+4| *** User from 140.113.250.43/64670 is named 'GingerCookies'. ***
 
 4 % name HotCakes
-1| *** User from 127.0.0.1/52484 is named 'HotCakes'. ***
-2| *** User from 127.0.0.1/52484 is named 'HotCakes'. ***
-3| *** User from 127.0.0.1/52484 is named 'HotCakes'. ***
-4| *** User from 127.0.0.1/52484 is named 'HotCakes'. ***
+1| *** User from 140.113.250.43/56880 is named 'HotCakes'. ***
+2| *** User from 140.113.250.43/56880 is named 'HotCakes'. ***
+3| *** User from 140.113.250.43/56880 is named 'HotCakes'. ***
+4| *** User from 140.113.250.43/56880 is named 'HotCakes'. ***
 4| % 
 
 1 % number test.html >2
@@ -114,9 +114,9 @@ login4
 3|    3 <BODY>This is a <b>test</b> program
 3|    4 for ras.
 3|    5 </BODY>
+4| *** GingerCookies (#3) just received from FruitBuffet (#2) by 'number <2' ***
 3| *** GingerCookies (#3) just received from FruitBuffet (#2) by 'number <2' ***
 3| % 
-4| *** GingerCookies (#3) just received from FruitBuffet (#2) by 'number <2' ***
 
 3 % ls >4
 1| *** GingerCookies (#3) just piped 'ls >4' to HotCakes (#4) ***
@@ -127,9 +127,9 @@ login4
 
 2 % number test.html >5
 2| *** Error: user #5 does not exist yet. ***
-2| % 
 
 3 % number <2
+2| % 
 3| *** Error: the pipe #2->#3 does not exist yet. ***
 3| % 
 
@@ -144,12 +144,8 @@ login4
 1| *** HotCakes (#4) just received from GingerCookies (#3) by 'number <3' ***
 2| *** HotCakes (#4) just received from GingerCookies (#3) by 'number <3' ***
 3| *** HotCakes (#4) just received from GingerCookies (#3) by 'number <3' ***
-4|    1 baozi
-4|    2 bin
-4|    3 ls.txt
-4|    4 test1.txt
-4|    5 test2.txt
-4|    6 test.html
+4|    1 bin
+4|    2 test.html
 4| *** HotCakes (#4) just received from GingerCookies (#3) by 'number <3' ***
 4| % 
 
@@ -180,28 +176,28 @@ logout1
 4| *** User 'Egglet' left. ***
 
 login5
-2| *** User '(no name)' entered from 127.0.0.1/52485. ***
-3| *** User '(no name)' entered from 127.0.0.1/52485. ***
-4| *** User '(no name)' entered from 127.0.0.1/52485. ***
+2| *** User '(no name)' entered from 140.113.250.43/63958. ***
+3| *** User '(no name)' entered from 140.113.250.43/63958. ***
+4| *** User '(no name)' entered from 140.113.250.43/63958. ***
 5| ****************************************
 5| ** Welcome to the information server. **
 5| ****************************************
-5| *** User '(no name)' entered from 127.0.0.1/52485. ***
+5| *** User '(no name)' entered from 140.113.250.43/63958. ***
 5| % 
 
 5 % name IceCream
-2| *** User from 127.0.0.1/52485 is named 'IceCream'. ***
-3| *** User from 127.0.0.1/52485 is named 'IceCream'. ***
-4| *** User from 127.0.0.1/52485 is named 'IceCream'. ***
-5| *** User from 127.0.0.1/52485 is named 'IceCream'. ***
+2| *** User from 140.113.250.43/63958 is named 'IceCream'. ***
+3| *** User from 140.113.250.43/63958 is named 'IceCream'. ***
+4| *** User from 140.113.250.43/63958 is named 'IceCream'. ***
+5| *** User from 140.113.250.43/63958 is named 'IceCream'. ***
 5| % 
 
 5 % who
 5| <ID>	<nickname>	<IP/port>	<indicate me>
-5| 1	IceCream	127.0.0.1/52485	<-me
-5| 2	FruitBuffet	127.0.0.1/52482
-5| 3	GingerCookies	127.0.0.1/52483
-5| 4	HotCakes	127.0.0.1/52484
+5| 1	IceCream	140.113.250.43/63958	<-me
+5| 2	FruitBuffet	140.113.250.43/55089
+5| 3	GingerCookies	140.113.250.43/64670
+5| 4	HotCakes	140.113.250.43/56880
 5| % 
 
 5 % cat <4

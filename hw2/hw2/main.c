@@ -266,10 +266,10 @@ int main(int argc, char *argv[]) {
 
             broadcast_init(connfd);
 
+            fifo_init();
+
             welcome_msg(connfd);
             broadcast_user_connect(serv_addr);
-
-            fifo_init();
 
             // client: handle
             client_handler(connfd);

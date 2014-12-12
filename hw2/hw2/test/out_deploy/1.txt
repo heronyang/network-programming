@@ -3,15 +3,15 @@ login1
 1| ****************************************
 1| ** Welcome to the information server. **
 1| ****************************************
-1| *** User '(no name)' entered from 127.0.0.1/52472. ***
-1| % 
+1| *** User '(no name)' entered from 140.113.250.43/62090. ***
 
 login2
-1| *** User '(no name)' entered from 127.0.0.1/52473. ***
+1| *** User '(no name)' entered from 140.113.250.43/61942. ***
 2| ****************************************
 2| ** Welcome to the information server. **
 2| ****************************************
-2| *** User '(no name)' entered from 127.0.0.1/52473. ***
+2| *** User '(no name)' entered from 140.113.250.43/61942. ***
+1| % 
 2| % 
 
 1 % printenv PATH
