@@ -1,7 +1,7 @@
 #ifndef CONSTANT_H
 #define CONSTANT_H
 
-#define DEBUG           0
+#define DEBUG           1
 
 #define PORT            33917
 
