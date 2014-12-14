@@ -99,7 +99,7 @@ void bash_serve() {
     struct timeval timeout; // second, microsecs
     fd_set fds;
 
-    timeout.tv_sec = 20;
+    timeout.tv_sec = 10;
     timeout.tv_usec = 0;
 
     while(1) {
@@ -136,7 +136,8 @@ void bash_serve() {
 
             // read
             bzero(buf, BUFSIZE);
-            n = recv(s, buf, BUFSIZE, 0);
+            //n = recv(s, buf, BUFSIZE, 0);
+            n = read(s, buf, BUFSIZE);
 
             if(n<=0) {
                 fprintf(stderr, "close socket (%d): %d\n", i+1, s);
