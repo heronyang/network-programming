@@ -1,5 +1,4 @@
 CC=gcc
 all:
-	$(CC) -Werror main.c -o main
+	$(CC) -Wall rbs.c main.c html_client.c -o main
 	cp main ../www/cgi-bin/main.cgi
-	$(CC) -Werror rbs.c -o rbs

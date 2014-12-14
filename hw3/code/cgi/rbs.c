@@ -7,12 +7,21 @@
 #include <netinet/in.h>
 #include <netdb.h> 
 #include <fcntl.h>
+#include <errno.h>
 
-#define BUFSIZE 1024
+#include "constant.h"
+#include "type.h"
+#include "html_client.h"
+#include "rbs.h"
 
 #define IP          "127.0.0.1"
 #define PORT        33917
-#define FILEPATH    "test.txt"
+
+/* External */
+Request req[MAX_REQUEST];
+
+/* Global */
+char buf[BUFSIZE];
 
 /* Tool Function */
 void error(char *msg) {
@@ -20,13 +29,14 @@ void error(char *msg) {
     exit(0);
 }
 
-/* Main */
-int main(int argc, char **argv) {
+/* Socket Function */
+void bash_new(int ind) {
+
+    char filepath[MAX_PATH_LENGTH] = FILES_PATH_DIR;    // default dir
 
     int sockfd, fd, n;
     struct sockaddr_in serveraddr;
     struct hostent *server;
-    char buf[BUFSIZE];
 
     /* create the socket */
     sockfd = socket(AF_INET, SOCK_STREAM, 0);
@@ -52,34 +62,101 @@ int main(int argc, char **argv) {
         error("ERROR connecting");
     }
 
+    /* save socket */
+    req[ind].socket = sockfd;
+
+    /* write file content */
     // 1. read from file
-    fd = open("test.txt", O_RDONLY);
+    strcat(filepath, req[ind].file);
+    fd = open(filepath, O_RDONLY);
     if(fd < 0)  error("open");
     bzero(buf, BUFSIZE);
     n = read(fd, buf, BUFSIZE);
     if(n < 0)   error("ERROR reading from file");
+    close(fd);
 
     // 2. write to socket
     n = write(sockfd, buf, strlen(buf));
     if(n < 0)   error("ERROR writing to socket");
 
-    // keep reading
-    // 3. read from socket
-    bzero(buf, BUFSIZE);
-    n = read(sockfd, buf, BUFSIZE);
-    if(n < 0)   error("ERROR reading from socket");
-    printf("Read from server: %s***END***", buf);
+}
 
-    // 4. read socket
-    bzero(buf, BUFSIZE);
-    n = read(sockfd, buf, BUFSIZE);
-    if(n < 0)   error("ERROR reading from socket");
+void bash_serve() {
 
-    //
-    printf("Echo from server: %s***END***", buf);
-    close(sockfd);
+    int i, s, max_s, n;
+    int activity;
+    struct timeval timeout; // second, microsecs
+    fd_set fds;
 
-    //
-    return 0;
+    timeout.tv_sec = 1;
+    timeout.tv_usec = 0;
+
+    while(1) {
+
+        //
+        FD_ZERO(&fds);
+        max_s = 0;
+
+        for( i=0 ; i<MAX_REQUEST ; i++ ) {
+
+            s = req[i].socket;
+            if(!s) continue;
+            if(s>max_s) max_s = s;
+
+            FD_SET(s, &fds);
+            fprintf(stderr, "socket (%d)%d is set\n", i+1, s);
+
+        }
+
+        // select
+        activity = select(max_s+1, &fds, NULL, NULL, &timeout);
+        if( (activity<0) && (errno!=EINTR) ) {
+            error("select");
+        } else if( activity == 0 ) {
+            fprintf(stderr, "timeout\n");
+            break;
+        }
+
+        for( i=0 ; i<MAX_REQUEST ; i++ ) {
+
+            s = req[i].socket;
+            if(!s) continue;
+            if(!FD_ISSET(s, &fds))  continue;
+
+            // read
+            bzero(buf, BUFSIZE);
+            n = recv(s, buf, BUFSIZE, 0);
+            if(n<=0) {
+                fprintf(stderr, "close socket (%d): %d\n", i+1, s);
+                close(s);
+                req[i].socket = 0;
+                FD_CLR(s, &fds);
+            }
+
+            printf("<p>Read from server(%d):<br />%s***END***<br /></p>", i+1, buf);
+            write_content_at(i, wrap_html(buf));
+            fprintf(stderr, "Read from server(%d):<br />%s***END***<br />", i+1, buf);
+
+        }
+
+    }
+
+    // FIXME: when to close socket?
+}
+
+
+/* Main */
+void rbs() {
+
+    int i;
+    for( i=0 ; i<MAX_REQUEST ; i++ ) {
+        Request r = req[i];
+        if( !(r.ip && r.port && r.file) )   continue;
+        bash_new(i);
+    }
+
+    bash_serve();
+
+    return;
 
 }
