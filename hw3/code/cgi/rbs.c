@@ -52,22 +52,23 @@ int main(int argc, char **argv) {
         error("ERROR connecting");
     }
 
-    // 1. read from socket
-    bzero(buf, BUFSIZE);
-    n = read(sockfd, buf, BUFSIZE);
-    if(n < 0)   error("ERROR reading from socket");
-    printf("Read from server: %s***END***", buf);
-
-    // 2. read from file
+    // 1. read from file
     fd = open("test.txt", O_RDONLY);
     if(fd < 0)  error("open");
     bzero(buf, BUFSIZE);
     n = read(fd, buf, BUFSIZE);
     if(n < 0)   error("ERROR reading from file");
 
-    // 3. write to socket
+    // 2. write to socket
     n = write(sockfd, buf, strlen(buf));
     if(n < 0)   error("ERROR writing to socket");
+
+    // keep reading
+    // 3. read from socket
+    bzero(buf, BUFSIZE);
+    n = read(sockfd, buf, BUFSIZE);
+    if(n < 0)   error("ERROR reading from socket");
+    printf("Read from server: %s***END***", buf);
 
     // 4. read socket
     bzero(buf, BUFSIZE);
