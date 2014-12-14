@@ -88,7 +88,7 @@ void bash_serve() {
     struct timeval timeout; // second, microsecs
     fd_set fds;
 
-    timeout.tv_sec = 1;
+    timeout.tv_sec = 2;
     timeout.tv_usec = 0;
 
     while(1) {
@@ -126,6 +126,7 @@ void bash_serve() {
             // read
             bzero(buf, BUFSIZE);
             n = recv(s, buf, BUFSIZE, 0);
+
             if(n<=0) {
                 fprintf(stderr, "close socket (%d): %d\n", i+1, s);
                 close(s);
@@ -135,7 +136,7 @@ void bash_serve() {
 
             printf("<p>Read from server(%d):<br />%s***END***<br /></p>", i+1, buf);
             write_content_at(i, wrap_html(buf));
-            fprintf(stderr, "Read from server(%d):<br />%s***END***<br />", i+1, buf);
+            fprintf(stderr, "Read from server(%d):<br />%s***END***<br />\n", i+1, buf);
 
         }
 
