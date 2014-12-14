@@ -46,7 +46,16 @@ char *replace_str(const char *str, const char *old, const char *new) {
 }
 
 char *wrap_html(char *s) {
-    return replace_str(s, "\n", "<br />");
+    fprintf(stderr, "wrapping:\n%s\n", s);
+    char *r;
+    r = s;
+    r = replace_str(r, "&",     "&amp;");
+    r = replace_str(r, "\"",    "&quot;");
+    r = replace_str(r, "<",     "&lt;");
+    r = replace_str(r, ">",     "&gt;");
+    r = replace_str(r, "\r\n",  "\n");
+    r = replace_str(r, "\n",    "<br />");
+    return r;
 }
 
 //
@@ -73,8 +82,12 @@ void write_head_at(int num, char *content) {
     printf("<script>document.all['res_tr_head'].innerHTML += \"<td>%s</td>\";</script>", content);
 }
 
-void write_content_at(int num, char *content) {
-    printf("<script>document.all('c-%d').innerHTML += \"%s\";</script>", num, content);
+void write_content_at(int num, char *content, int bold) {
+    if(bold)
+        printf("<script>document.all('c-%d').innerHTML += \"<b>%s</b>\";</script>", num, content);
+    else
+        printf("<script>document.all('c-%d').innerHTML += \"%s\";</script>", num, content);
+    fflush(stdout);
 }
 
 void write_content_init(int num) {
@@ -96,7 +109,6 @@ void serve_req() {
     for( i=0 ; i<MAX_REQUEST ; i++ ) {
         Request r = req[i];
         if( !(r.ip && r.port && r.file) )   continue;
-        printf("<h3>should handle %d</h3>", i+1);
         serve_req_at(i);
     }
 }

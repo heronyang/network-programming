@@ -30,11 +30,36 @@ void error(char *msg) {
 }
 
 /* Socket Function */
+void write_command_init(int ind) {
+    char filepath[MAX_PATH_LENGTH] = FILES_PATH_DIR;    // default dir
+    strcat(filepath, req[ind].file);
+    req[ind].fp = fopen(filepath, "r");
+}
+
+void write_command_close(int ind) {
+    fclose(req[ind].fp);
+}
+
+void write_command_next(int ind) {
+
+    int n;
+
+    if(!fgets(buf, BUFSIZE, req[ind].fp)) {
+        error("fgets");
+    }
+    write_content_at(ind, wrap_html(buf), 1);
+
+    if(buf[0] == '\n')  return;
+    fprintf(stderr, "buf >> %s(%d)\n", buf, (int)strlen(buf));
+    n = write(req[ind].socket, buf, strlen(buf));
+    if(n < 0)   error("ERROR writing to socket");
+
+}
+
+
 void bash_new(int ind) {
 
-    char filepath[MAX_PATH_LENGTH] = FILES_PATH_DIR;    // default dir
-
-    int sockfd, fd, n;
+    int sockfd;
     struct sockaddr_in serveraddr;
     struct hostent *server;
 
@@ -65,20 +90,6 @@ void bash_new(int ind) {
     /* save socket */
     req[ind].socket = sockfd;
 
-    /* write file content */
-    // 1. read from file
-    strcat(filepath, req[ind].file);
-    fd = open(filepath, O_RDONLY);
-    if(fd < 0)  error("open");
-    bzero(buf, BUFSIZE);
-    n = read(fd, buf, BUFSIZE);
-    if(n < 0)   error("ERROR reading from file");
-    close(fd);
-
-    // 2. write to socket
-    n = write(sockfd, buf, strlen(buf));
-    if(n < 0)   error("ERROR writing to socket");
-
 }
 
 void bash_serve() {
@@ -88,7 +99,7 @@ void bash_serve() {
     struct timeval timeout; // second, microsecs
     fd_set fds;
 
-    timeout.tv_sec = 2;
+    timeout.tv_sec = 20;
     timeout.tv_usec = 0;
 
     while(1) {
@@ -131,18 +142,23 @@ void bash_serve() {
                 fprintf(stderr, "close socket (%d): %d\n", i+1, s);
                 close(s);
                 req[i].socket = 0;
+                write_command_close(i);
                 FD_CLR(s, &fds);
             }
 
-            printf("<p>Read from server(%d):<br />%s***END***<br /></p>", i+1, buf);
-            write_content_at(i, wrap_html(buf));
-            fprintf(stderr, "Read from server(%d):<br />%s***END***<br />\n", i+1, buf);
+            if(DEBUG)   printf("<p>Read from server(%d):<br />%s***END***<br /></p>", i+1, wrap_html(buf));
+            write_content_at(i, wrap_html(buf), 0);
+
+            // write next command
+            if(buf[0] == '%' || (buf[0] == '*' && buf[3] == '*')) {
+                fprintf(stderr, "get response success (%d)\n", i+1);
+                write_command_next(i);
+            }
 
         }
 
     }
 
-    // FIXME: when to close socket?
 }
 
 
@@ -153,6 +169,7 @@ void rbs() {
     for( i=0 ; i<MAX_REQUEST ; i++ ) {
         Request r = req[i];
         if( !(r.ip && r.port && r.file) )   continue;
+        write_command_init(i);
         bash_new(i);
     }
 

@@ -6,6 +6,7 @@ typedef struct {
     char *port;
     char *file;
     int socket;
+    FILE *fp;
 } Request;
 
 #endif

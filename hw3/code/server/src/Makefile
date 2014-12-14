@@ -7,7 +7,8 @@ all: $(patsubst %.cpp, %, $(wildcard *.cpp))
 	cp number ../ras_template/bin/
 	cp removetag ../ras_template/bin/
 	cp removetag0 ../ras_template/bin/
+	cp delayedremovetag ../ras_template/bin/
 
 clean:
-	rm noop number removetag removetag0
+	rm noop number removetag removetag0 delayedremovetag
 	rm ls cat

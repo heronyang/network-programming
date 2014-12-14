@@ -51,6 +51,8 @@ int fork_and_exec_last(int connfd, char **cmd) {
 
         if( cmd[0][0]=='/' || execvp(cmd[0], cmd)<0 ) {
             fprintf(stderr, "Unknown command: [%s].\n", cmd[0]);
+            fprintf(stdout, "Unknown command: [%s].\n", cmd[0]);
+            fflush(stderr);
             exit(EXIT_FAILURE);
         }
         exit(EXIT_SUCCESS);
@@ -127,6 +129,8 @@ int fork_and_exec_pipe(int connfd, char **cmd, int p_n) {
 
         if(cmd[0][0]=='/' || execvp(cmd[0], cmd)<0) {
             fprintf(stderr, "Unknown command: [%s].\n", cmd[0]);
+            fprintf(stdout, "Unknown command: [%s].\n", cmd[0]);
+            fflush(stderr);
             close(fd[WRITE]);
             exit(EXIT_FAILURE);
         }
@@ -175,6 +179,8 @@ int fork_and_exec_file(int connfd, char **cmd, char *filepath) {
 
         if( cmd[0][0]=='/' || execvp(cmd[0], cmd)<0 ) {
             fprintf(stderr, "Unknown command: [%s].\n", cmd[0]);
+            fprintf(stdout, "Unknown command: [%s].\n", cmd[0]);
+            fflush(stderr);
             close(fd_file);
             exit(EXIT_FAILURE);
         }
@@ -216,6 +222,8 @@ int fork_and_exec_fifo_in(int connfd, char **cmd, int source_id) {
 
         if( cmd[0][0]=='/' || execvp(cmd[0], cmd)<0 ) {
             fprintf(stderr, "Unknown command: [%s].\n", cmd[0]);
+            fprintf(stdout, "Unknown command: [%s].\n", cmd[0]);
+            fflush(stderr);
             exit(EXIT_FAILURE);
         }
 
@@ -265,6 +273,8 @@ int fork_and_exec_fifo_out(int connfd, char **cmd, int target_id) {
 
         if( cmd[0][0]=='/' || execvp(cmd[0], cmd)<0 ) {
             fprintf(stderr, "Unknown command: [%s].\n", cmd[0]);
+            fprintf(stdout, "Unknown command: [%s].\n", cmd[0]);
+            fflush(stderr);
             close(fd);
             exit(EXIT_FAILURE);
         }
@@ -315,6 +325,8 @@ int fork_and_exec_fifo_in_out(int connfd, char **cmd, int source_id, int target_
 
         if( cmd[0][0]=='/' || execvp(cmd[0], cmd)<0 ) {
             fprintf(stderr, "Unknown command: [%s].\n", cmd[0]);
+            fprintf(stdout, "Unknown command: [%s].\n", cmd[0]);
+            fflush(stderr);
             exit(EXIT_FAILURE);
         }
 

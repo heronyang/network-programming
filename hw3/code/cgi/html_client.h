@@ -5,6 +5,6 @@ char *wrap_html(char *s);
 
 void print_req();
 void serve_req();
-void write_content_at(int num, char *content);
+void write_content_at(int num, char *content, int bold);
 
 #endif

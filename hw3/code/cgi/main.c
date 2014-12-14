@@ -61,14 +61,12 @@ void parse_param(const char *str) {
     for( i=0 ; result[i]!=NULL ; i++) {
 
         ind = strtok(result[i], "=");
+        if(ind == NULL) continue;
         val = strtok(NULL, "=");
         if(val == NULL) continue;
 
-        printf("<p><i>%s, %s (len = %d)</i></p>", ind, val, (int)strlen(val));
-        
         if( sscanf(ind, "%c%d", &ele, &num) != 2 )   perror("scanf");
         num --;
-        printf("<p>_%c_, _%d_</p>", ele, num);
 
         if(ele == 'h') {
             req[num].ip = malloc(REQUEST_CONTENT_LENGTH);
@@ -126,9 +124,8 @@ int main(void) {
     if(data == NULL)
         printf("<p>Error! Error in passing data from form to script.</p>");
     else {
-        printf("<p>param: <b>%s</b></p>", data);
         parse_param(data);
-        print_req();
+        if(DEBUG)   print_req();
         serve_req();
         rbs();
     }
