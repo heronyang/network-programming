@@ -90,7 +90,13 @@ void html_init() {
         <meta http-equiv=\"Content-Type\" content=\"text/html; charset=big5\" /> \
         <title>Network Programming Homework 3</title> \
         </head> \
-        <body style=\"font-family: 'Courier New', Courier, monospace;\">";
+        <body style=\"font-family: 'Courier New', Courier, monospace;\">\
+        <style>\
+        td {\
+            font-size: small;\
+            vertical-align: top;\
+        }\
+        </style>";
     char *table_html = "<table id=\"result_table\" width=\"800\" border=\"1\">\
                         <tr id=\"res_tr_head\"></tr>\
                         <tr id=\"res_tr_content\"></tr>\
@@ -101,14 +107,7 @@ void html_init() {
 }
 
 void html_end() {
-    char *content = "<style>\
-        td {\
-            font-size: small;\
-            vertical-align: top;\
-        }\
-        </style>\
-        </body> \
-        </html>";
+    char *content = "</body></html>";
     printf("%s", content);
 }
 

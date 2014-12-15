@@ -88,6 +88,8 @@ void write_content_at(int num, char *content, int bold) {
     else
         printf("<script>document.all('c-%d').innerHTML += \"%s\";</script>", num, content);
     fflush(stdout);
+    fflush(stdout);
+    fflush(stdout);
 }
 
 void write_content_init(int num) {

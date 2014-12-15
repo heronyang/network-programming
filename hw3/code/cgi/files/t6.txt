@@ -1,0 +1,3 @@
+delayedremovetag test.html
+exit
+

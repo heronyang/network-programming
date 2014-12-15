@@ -29,6 +29,14 @@ void error(char *msg) {
     exit(0);
 }
 
+int contain_prompt() {
+    int i;
+    for( i=0 ; i<strlen(buf) ; i++ ) {
+        if(buf[i] == '%')   return 1;
+    }
+    return 0;
+}
+
 /* Socket Function */
 void write_command_init(int ind) {
     char filepath[MAX_PATH_LENGTH] = FILES_PATH_DIR;    // default dir
@@ -50,7 +58,7 @@ void write_command_next(int ind) {
     write_content_at(ind, wrap_html(buf), 1);
 
     if(buf[0] == '\n')  return;
-    fprintf(stderr, "buf >> %s(%d)\n", buf, (int)strlen(buf));
+    fprintf(stderr, "%s(%d)\n", buf, (int)strlen(buf));
     n = write(req[ind].socket, buf, strlen(buf));
     if(n < 0)   error("ERROR writing to socket");
 
@@ -70,7 +78,7 @@ void bash_new(int ind) {
     }
 
     /* get server */
-    server = gethostbyname(IP);
+    server = gethostbyname(req[ind].ip);
     if (server == NULL) {
         fprintf(stderr,"ERROR, no such host as %s\n", IP);
         exit(0);
@@ -80,7 +88,7 @@ void bash_new(int ind) {
     bzero((char *) &serveraddr, sizeof(serveraddr));
     serveraddr.sin_family = AF_INET;
     bcopy((char *)server->h_addr, (char *)&serveraddr.sin_addr.s_addr, server->h_length);
-    serveraddr.sin_port = htons(PORT);
+    serveraddr.sin_port = htons(atoi(req[ind].port));
 
     /* connect: create a connection with the server */
     if (connect(sockfd, (struct sockaddr *)&serveraddr,sizeof(serveraddr)) < 0) {
@@ -99,7 +107,7 @@ void bash_serve() {
     struct timeval timeout; // second, microsecs
     fd_set fds;
 
-    timeout.tv_sec = 10;
+    timeout.tv_sec = 600;
     timeout.tv_usec = 0;
 
     while(1) {
@@ -117,6 +125,11 @@ void bash_serve() {
             FD_SET(s, &fds);
             fprintf(stderr, "socket (%d)%d is set\n", i+1, s);
 
+        }
+
+        if(!max_s) {
+            fprintf(stderr, "no more existing socket\n");
+            break;
         }
 
         // select
@@ -151,9 +164,11 @@ void bash_serve() {
             write_content_at(i, wrap_html(buf), 0);
 
             // write next command
-            if(buf[0] == '%' || (buf[0] == '*' && buf[3] == '*')) {
-                fprintf(stderr, "get response success (%d)\n", i+1);
+            //if(buf[0] == '%' || (buf[0] == '*' && buf[3] == '*')) {
+            if(contain_prompt()) {
+                fprintf(stderr, ">>> socket (%d) get:%s\nsend:\n<<<\n", i+1, buf);
                 write_command_next(i);
+                fprintf(stderr, "\n<<<\n");
             }
 
         }
