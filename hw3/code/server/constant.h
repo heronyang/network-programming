@@ -3,7 +3,7 @@
 
 #define DEBUG           1
 
-#define PORT            33917
+#define PORT            33918
 
 #define SIZE_SEND_BUFF  1000001
 #define SIZE_READ_BUFF  1000001

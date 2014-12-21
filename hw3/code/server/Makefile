@@ -2,7 +2,7 @@ CC=gcc
 OBJ=main.o signal.o client.o clients.o pipe.o fork_exec.o env.o broadcast.o fifo.o fifo_lock.o
 CFLAG=-g -Wall
 
-PORT=33917
+PORT=33918
 
 main: $(OBJ)
 	$(CC) -o $@ $^
