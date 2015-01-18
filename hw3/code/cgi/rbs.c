@@ -38,10 +38,18 @@ int contain_prompt() {
 }
 
 /* Socket Function */
-void write_command_init(int ind) {
+int write_command_init(int ind) {
+    char buf[BUFSIZE];
     char filepath[MAX_PATH_LENGTH] = FILES_PATH_DIR;    // default dir
     strcat(filepath, req[ind].file);
     req[ind].fp = fopen(filepath, "r");
+    if(req[ind].fp == NULL) {
+        strcpy(buf, "wrong file<br />");
+        write_content_at(ind, buf, 0);
+        return 1;
+    }
+
+    return 0;
 }
 
 void write_command_close(int ind) {
@@ -78,10 +86,16 @@ void bash_new(int ind) {
     }
 
     /* get server */
+    char buf[BUFSIZE];
     server = gethostbyname(req[ind].ip);
     if (server == NULL) {
         fprintf(stderr,"ERROR, no such host as %s\n", IP);
-        exit(0);
+
+        // TODO: hostname
+        strcpy(buf, "wrong hostname<br />");
+        write_content_at(ind, buf, 0);
+
+        return;
     }
 
     /* setup socket */
@@ -89,10 +103,13 @@ void bash_new(int ind) {
     serveraddr.sin_family = AF_INET;
     bcopy((char *)server->h_addr, (char *)&serveraddr.sin_addr.s_addr, server->h_length);
     serveraddr.sin_port = htons(atoi(req[ind].port));
+    
+    // TODO: IP
 
     /* connect: create a connection with the server */
     if (connect(sockfd, (struct sockaddr *)&serveraddr,sizeof(serveraddr)) < 0) {
         error("ERROR connecting");
+        return;
     }
 
     /* save socket */
@@ -182,10 +199,17 @@ void bash_serve() {
 void rbs() {
 
     int i;
+    char buf[BUFSIZE];
     for( i=0 ; i<MAX_REQUEST ; i++ ) {
         Request r = req[i];
-        if( !(r.ip && r.port && r.file) )   continue;
-        write_command_init(i);
+        if( !(r.ip && r.file) )   continue;
+        if( write_command_init(i) == 1 )    continue;
+        if( r.port==NULL ) {
+            strcpy(buf, "wrong ip<br />");
+            write_content_at(i, buf, 0);
+            fprintf(stderr, "ip not found\n");
+            continue;
+        }
         bash_new(i);
     }
 

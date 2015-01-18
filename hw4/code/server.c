@@ -45,7 +45,7 @@ void catch_int(int i) {
 
     if(child_count!=0) {
         fprintf(stderr, "unfinished client, can't close\n");
-        return;
+        // return;
     }
 
     // release shared memory from system
@@ -99,24 +99,31 @@ int connectTCP(const char *host, const char *port) {
         return -1;
     }
 
+    printf("connected to remote server: %s:%s\n", host, port);
+
     return sock;
 
 }
 
-int remote_connect(int sock, int rsock) {
+int dual_forwarding(int sock, int rsock) {
 
     int n, is_close_sock = 0, is_close_rsock = 0, i;
     int max_fd = (sock>rsock)? sock : rsock;
+    max_fd = getdtablesize();
 
     char read_buf[BUF_SIZE];
 
-    fd_set fds;
+    fd_set fds, _fds;
 
-    FD_ZERO(&fds);
-    FD_SET(sock, &fds);
-    FD_SET(rsock, &fds);
+    FD_ZERO(&_fds);
+    FD_SET(sock, &_fds);
+    FD_SET(rsock, &_fds);
+
+    printf("sock=%d\trsock=%d\n", sock, rsock);
 
     while(1) {
+
+        memcpy(&fds, &_fds, sizeof(_fds));
 
         if( select(max_fd, &fds, NULL, NULL, NULL)<0 && (errno!=EINTR) ) {
             perror("select");
@@ -124,7 +131,8 @@ int remote_connect(int sock, int rsock) {
         }
 
         if( FD_ISSET(sock, &fds) ) {    // master
-            n = recv(sock, read_buf, sizeof(read_buf), 0);
+            memset(read_buf, 0, BUF_SIZE);
+            n = recv(sock, read_buf, BUF_SIZE, 0);
             if( n<0 ) {
                 perror("recv");
                 return -1;
@@ -134,33 +142,24 @@ int remote_connect(int sock, int rsock) {
 
                 is_close_sock = 1;
                 FD_CLR(sock, &fds);
-                // shutdown(sock, SHUT_RD);
-                // shutdown(rsock, SHUT_RD);
+                shutdown(sock, SHUT_RD);
+                shutdown(rsock, SHUT_RD);
 
             } else {
+                printf("%d: read from master:\n%s\n", getpid(), read_buf);
                 if( send(rsock, read_buf, n, 0)<0 ) {
                     perror("send");
                     return -1;
                 } else {
-                    // success ...
-                    printf("%d: read from master\n", getpid());
-                    for( i=0 ; i<( (n>40)? 40:n) ; i++) {
-                        printf("%c (%d)\t", read_buf[i], read_buf[i]);
-                        if( (n+1) %10 == 0 )    printf("\n");
-                    }
-                    if( n>40 ) {
-                        printf("......\n");
-                    } else {
-                        printf("\n");
-                    }
-
-                    fflush(stdout);
+                    printf("%d: send to remote:\n%s\n", getpid(), read_buf);
                 }
+                fflush(stdout);
             }
         }
 
         if( FD_ISSET(rsock, &fds) ) {   // remote server
-            n = recv(rsock, read_buf, sizeof(read_buf), 0);
+            memset(read_buf, 0, BUF_SIZE);
+            n = recv(rsock, read_buf, BUF_SIZE, 0);
             if( n<0 ) {
                 perror("recv");
                 return -1;
@@ -170,28 +169,18 @@ int remote_connect(int sock, int rsock) {
 
                 is_close_rsock = 1;
                 FD_CLR(rsock, &fds);
-                // shutdown(sock, SHUT_RD);
-                // shutdown(rsock, SHUT_RD);
+                shutdown(sock, SHUT_RD);
+                shutdown(rsock, SHUT_RD);
 
             } else {
+                printf("%d: read from remote:%s\n", getpid(), read_buf);
                 if( send(sock, read_buf, n, 0)<0 ) {
                     perror("send");
                     return -1;
                 } else {
-                    // success ...
-                    printf("%d: read from remote\n", getpid());
-                    for( i=0 ; i<( (n>40)? 40:n) ; i++) {
-                        printf("%c (%d)\t", read_buf[i], read_buf[i]);
-                        if( (n+1) %10 == 0 )    printf("\n");
-                    }
-                    if( n>40 ) {
-                        printf("......\n");
-                    } else {
-                        printf("\n");
-                    }
-
-                    fflush(stdout);
+                    printf("%d: send from master:%s\n", getpid(), read_buf);
                 }
+                fflush(stdout);
             }
         }
 
@@ -199,8 +188,8 @@ int remote_connect(int sock, int rsock) {
             break;
         }
 
-
     }
+    printf("client handler end\n");
 
     close(sock);
     close(rsock);
@@ -216,7 +205,7 @@ void client_handler(int sock) {
     char write_buf[BUF_SIZE];
 
     if( read(sock, read_buf, BUF_SIZE) <= 0 ) {
-        fprintf(stderr, "read failed\n");
+        fprintf(stderr, "[client_handler] read failed\n");
         return;
     }
 
@@ -233,7 +222,8 @@ void client_handler(int sock) {
     printf("\nread (size: %d)>> %s\n", (int)strlen(read_buf), read_buf);
     int i;
     for( i=0 ; i<strlen(read_buf) ; i++ ) {
-        printf("[%d]: (%d) %c\n", i, read_buf[i], read_buf[i]);
+        printf("[%d]: (%d) %c\t", i, read_buf[i], read_buf[i]);
+        if( (i+1) % 10 == 0)    printf("\n");
     }
     printf("VN=%d, CD=%d, USER_ID=%s\n", VN, CD, USER_ID);
 
@@ -241,16 +231,12 @@ void client_handler(int sock) {
 
     if( CD == 1 ) {         // CONNECT
 
-        printf("CD = 1\n");
+        printf("CD = 1 (get CONNECT)\n");
 
         write_buf[0] = 0;
         write_buf[1] = (unsigned char) 90;
         for( i=2 ; i<=7 ; i++ ) {
             write_buf[i] = read_buf[i];
-        }
-        if( write(sock, write_buf, 8) <= 0 ) {
-            fprintf(stderr, "write failed\n");
-            return;
         }
 
         // debug
@@ -261,13 +247,16 @@ void client_handler(int sock) {
             printf("write_buf[%d]: %u\n", i, write_buf[i]&0x000000FF);
         }
 
-        rsock = connectTCP(str_dst_port, str_dst_ip);
+        rsock = connectTCP(str_dst_ip, str_dst_port);
         if(rsock <= 0) {
+            perror("connectTCP");
             write_buf[1] = (unsigned char) 91;
         }
 
-        write(sock, write_buf, 8);      // fix size here
-        remote_connect(sock, rsock);    // blocking
+        if( write(sock, write_buf, 8)<0 ) {
+            perror("write reply");
+        }
+        dual_forwarding(sock, rsock);    // blocking
 
     } else if( CD == 2 ) {  // BIND
     }
@@ -301,10 +290,12 @@ int main(int argc, char *argv[]) {
 
     /* socket - bind */
     int optval = 1;
-    if ( setsockopt(listenfd, SOL_SOCKET, SO_REUSEADDR, &optval, sizeof(int)) == -1 ) {
+    if( setsockopt(listenfd, SOL_SOCKET, SO_REUSEADDR, &optval, sizeof(int)) == -1 ) {
         perror("setsockopt");
     }
-    bind(listenfd, (struct sockaddr*)&serv_addr, sizeof(serv_addr)); 
+    if( bind(listenfd, (struct sockaddr*)&serv_addr, sizeof(serv_addr)) < 0 ) {
+        perror("bind");
+    }
 
     /* socket - listen */
     listen(listenfd, BACKLOG); 
@@ -316,6 +307,9 @@ int main(int argc, char *argv[]) {
 
         /* socket - accept */
         int connfd = accept(listenfd, (struct sockaddr*)&serv_addr, (socklen_t*)&addrlen); 
+        if( connfd<0 ) {
+            perror("accept");
+        }
         child_count ++;
 
         /* fork to handle */

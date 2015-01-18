@@ -97,6 +97,9 @@ void write_content_init(int num) {
             document.all('res_tr_content').innerHTML += \"\
                 <td id='c-%d'></td>\";\
             </script>", num);
+    fflush(stdout);
+    fflush(stdout);
+    fflush(stdout);
 }
 
 void serve_req_at(int num) {
@@ -110,7 +113,7 @@ void serve_req() {
     int i;
     for( i=0 ; i<MAX_REQUEST ; i++ ) {
         Request r = req[i];
-        if( !(r.ip && r.port && r.file) )   continue;
+        if( !(r.ip && r.file) )   continue;
         serve_req_at(i);
     }
 }
