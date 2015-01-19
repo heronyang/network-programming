@@ -223,6 +223,23 @@ int dual_forwarding(int sock, int rsock) {
     return 0;
 }
 
+int block_ip(char *ip) {
+
+    FILE *fp = fopen("socks.conf", "r");
+    char buf[100];
+
+    while( fgets(buf, sizeof(buf), fp) != NULL ) {
+        buf[strlen(buf)-1] = '\0';
+        printf("check block ip: (%d)%s, (%d)%s\n", (int)strlen(ip), ip, (int)strlen(buf), buf);
+        if( strcmp(ip, buf) == 0 ) {
+            printf("BLOCKED IP: %s\n", ip);
+            fclose(fp);
+            return 1;
+        }
+    }
+    return 0;
+}
+
 /*
  * Client
  */
@@ -246,6 +263,10 @@ void client_handler(int sock) {
     char *str_dst_ip = get_ip_str(read_buf);
 
     printf("VN=%d, CD=%d, IP=%s, PORT=%s, USER_ID=%s\n", VN, CD, str_dst_ip, str_dst_port, USER_ID);
+
+    if( block_ip(str_dst_ip) ) {
+        return;
+    }
 
     int rsock, psock, i;
 
