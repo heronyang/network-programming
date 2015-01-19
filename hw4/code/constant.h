@@ -5,6 +5,8 @@
 #define PORT        33917
 #define BACKLOG     10
 
+#define L_PORT      33920
+
 #define IP_STR      20
 #define PORT_STR    10
 

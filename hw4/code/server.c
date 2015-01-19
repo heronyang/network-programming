@@ -20,6 +20,7 @@
 #include <sys/ipc.h>
 #include <sys/shm.h>
 #include <arpa/inet.h>
+#include <stdint.h>
 
 #include "constant.h"
 
@@ -60,7 +61,6 @@ char *get_port_str(char *buf) {
     static char res[PORT_STR];
     unsigned int port = ((buf[2] & BYTE) << 8) + (buf[3] & BYTE);
     sprintf(res, "%u", port);
-    printf("port >> %s\n", res);
     return res;
 }
 
@@ -71,7 +71,6 @@ char *get_ip_str(char *buf) {
             buf[5] & BYTE,
             buf[6] & BYTE,
             buf[7] & BYTE);
-    printf("ip >> %s\n", res);
     return res;
 }
 
@@ -94,6 +93,7 @@ int connectTCP(const char *host, const char *port) {
         return -1;
     }
 
+    printf("connectTCP: connecting\n");
     if(connect(sock, (struct sockaddr*) &serv_addr, sizeof(serv_addr)) < 0) {
         perror("connect");
         return -1;
@@ -105,9 +105,36 @@ int connectTCP(const char *host, const char *port) {
 
 }
 
+int passiveTCP() {
+
+    struct sockaddr_in serv_addr;
+
+    int sock;
+    sock = socket(AF_INET, SOCK_STREAM, 0);
+    if( sock<0 ) {
+        perror("socket");
+    }
+
+    memset(&serv_addr, '0', sizeof(serv_addr));
+    serv_addr.sin_family = AF_INET;
+    serv_addr.sin_addr.s_addr = htonl(INADDR_ANY);
+    serv_addr.sin_port = htons(L_PORT);
+
+    if( bind(sock, (struct sockaddr *) &serv_addr, sizeof(serv_addr)) < 0 ) {
+        perror("bind");
+    }
+
+    if( listen(sock, BACKLOG) < 0 ) {
+        perror("listen");
+    }
+    printf("listening to port: %d\n", L_PORT);
+
+    return sock;
+}
+
 int dual_forwarding(int sock, int rsock) {
 
-    int n, is_close_sock = 0, is_close_rsock = 0, i;
+    int n, is_close_sock = 0, is_close_rsock = 0;
     int max_fd = (sock>rsock)? sock : rsock;
     max_fd = getdtablesize();
 
@@ -218,16 +245,9 @@ void client_handler(int sock) {
     char *str_dst_port = get_port_str(read_buf);
     char *str_dst_ip = get_ip_str(read_buf);
 
-    // print
-    printf("\nread (size: %d)>> %s\n", (int)strlen(read_buf), read_buf);
-    int i;
-    for( i=0 ; i<strlen(read_buf) ; i++ ) {
-        printf("[%d]: (%d) %c\t", i, read_buf[i], read_buf[i]);
-        if( (i+1) % 10 == 0)    printf("\n");
-    }
-    printf("VN=%d, CD=%d, USER_ID=%s\n", VN, CD, USER_ID);
+    printf("VN=%d, CD=%d, IP=%s, PORT=%s, USER_ID=%s\n", VN, CD, str_dst_ip, str_dst_port, USER_ID);
 
-    int rsock;
+    int rsock, psock, i;
 
     if( CD == 1 ) {         // CONNECT
 
@@ -237,14 +257,6 @@ void client_handler(int sock) {
         write_buf[1] = (unsigned char) 90;
         for( i=2 ; i<=7 ; i++ ) {
             write_buf[i] = read_buf[i];
-        }
-
-        // debug
-        for( i=0 ; i<8 ; i++ ) {
-            printf("read_buf[%d]: %u\n", i, read_buf[i]&0x000000FF);
-        }
-        for( i=0 ; i<8 ; i++ ) {
-            printf("write_buf[%d]: %u\n", i, write_buf[i]&0x000000FF);
         }
 
         rsock = connectTCP(str_dst_ip, str_dst_port);
@@ -259,6 +271,37 @@ void client_handler(int sock) {
         dual_forwarding(sock, rsock);    // blocking
 
     } else if( CD == 2 ) {  // BIND
+
+        printf("CD = 2 (get BIND)\n");
+
+        psock = passiveTCP();
+
+        write_buf[0] = 0;
+        write_buf[1] = (unsigned char) 90;
+        write_buf[2] = (unsigned char)L_PORT/256;
+        write_buf[3] = (unsigned char)L_PORT%256;
+        for( i=4 ; i<8 ; i++ ) {    // IP
+            write_buf[i] = 0;
+        }
+
+        if( write(sock, write_buf, 8)<0 ) {
+            perror("cd = 2, write");
+        }
+
+        struct sockaddr_in serv_addr;
+        int addrlen = sizeof(serv_addr);
+
+        // retrieve serv_addr
+        getsockname(psock, (struct sockaddr *)&serv_addr, (socklen_t *)&addrlen);
+        int sock_new = accept(psock, (struct sockaddr*)&serv_addr, (socklen_t*)&addrlen); 
+        if( sock_new<0 ) {
+            perror("CD = 2, accept");
+        } else {
+            dual_forwarding(sock, sock_new);
+        }
+
+    } else {
+        printf("unknow CD\n");
     }
 
 }
