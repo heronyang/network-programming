@@ -14,3 +14,7 @@ install:
 	apt-get install libapache2-mod-macro
 	a2enmod macro
 	/etc/init.d/apache2 restart
+
+npserver:
+	cp -r www/cgi-bin/ ~/public_html/
+	cp www/form_get.html ~/public_html/
